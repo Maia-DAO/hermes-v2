@@ -7,7 +7,7 @@ import {DSTestPlus} from "solmate/test/utils/DSTestPlus.sol";
 import {MockERC20} from "../mocks/MockERC20.sol";
 import "../mocks/MockBaseV2GaugeManager.sol";
 
-import "../mocks/MockBribesFactory.sol";
+import "@gauges/factories/BribesFactory.sol";
 
 error Unauthorized();
 error InvalidGauge();
@@ -20,7 +20,7 @@ contract BribesFactoryTest is DSTestPlus {
     address _bHermes = address(0xCAFA);
     address _admin = address(0xCAFB);
 
-    MockBribesFactory factory;
+    BribesFactory factory;
     MockBaseV2GaugeManager manager;
     ERC20 bribeToken;
     ERC20 bribeToken2;
@@ -36,7 +36,7 @@ contract BribesFactoryTest is DSTestPlus {
             BurntHermes(_bHermes), FlywheelGaugeRewards(address(this)), address(this), _admin
         );
         hevm.prank(flywheelGaugeWeightBooster);
-        factory = new MockBribesFactory(address(this));
+        factory = new BribesFactory(address(this));
         bribeToken = new MockERC20("Bribe Token", "BRIBE", 18);
         bribeToken2 = new MockERC20("Bribe Token2", "BRIBE2", 18);
     }
