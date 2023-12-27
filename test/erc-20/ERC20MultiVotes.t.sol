@@ -4,10 +4,11 @@ pragma solidity ^0.8.0;
 import {console2} from "forge-std/console2.sol";
 
 import {DSTestPlus} from "solmate/test/utils/DSTestPlus.sol";
+import {TestBase} from "forge-std/Base.sol";
 
 import {MockERC20MultiVotes, IERC20MultiVotes, ERC20MultiVotes} from "./mocks/MockERC20MultiVotes.t.sol";
 
-contract ERC20MultiVotesTest is DSTestPlus {
+contract ERC20MultiVotesTest is DSTestPlus, TestBase {
     MockERC20MultiVotes token;
     address constant delegate1 = address(0xDEAD);
     address constant delegate2 = address(0xBEEF);
@@ -243,7 +244,7 @@ contract ERC20MultiVotesTest is DSTestPlus {
         require(checkpoint1.fromBlock == block1);
         require(checkpoint1.votes == 8e18);
 
-        hevm.roll(2);
+        vm.roll(2);
         uint256 block2 = block.number;
         require(block2 == block1 + 1);
 
@@ -262,7 +263,7 @@ contract ERC20MultiVotesTest is DSTestPlus {
         require(checkpoint2.fromBlock == block2);
         require(checkpoint2.votes == 6e18);
 
-        hevm.roll(10);
+        vm.roll(10);
         uint256 block3 = block.number;
         require(block3 == block2 + 8);
 
@@ -295,7 +296,7 @@ contract ERC20MultiVotesTest is DSTestPlus {
         hevm.expectRevert(abi.encodeWithSignature("BlockError()"));
         token.getPriorVotes(delegate1, block3); // revert same block
 
-        hevm.roll(11);
+        vm.roll(11);
         require(token.getPriorVotes(delegate1, block3) == 10e18);
     }
 
