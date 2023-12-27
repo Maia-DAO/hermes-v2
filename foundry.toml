@@ -1,0 +1,14 @@
+[profile.default]
+src = "src"
+out = "out"
+libs = ["lib"]
+solc = "0.8.19"
+via_ir = true
+
+memory_limit = 43554432
+# memory_limit = 33554432 # default limit
+
+# Necessary for testing
+gas_price = 10000
+
+# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options

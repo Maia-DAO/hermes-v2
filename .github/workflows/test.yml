@@ -1,0 +1,64 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+env:
+  FOUNDRY_PROFILE: ci
+
+jobs:
+  forge-tests:
+    name: Forge Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Build
+        run: |
+          forge --version
+          forge build --sizes
+        id: build
+
+      - name: Run tests
+        run: |
+          forge test -vvv
+        id: test
+
+      - name: Generate Coverage Report
+        run: |
+          forge coverage --report lcov
+        id: coverage
+
+      - name: Extract Coverage Percentage
+        id: coverage-percentage
+        run: |
+          LF=$(grep -oP 'LF:\K\d+' lcov.info | awk '{s+=$1} END {print s}')
+          LH=$(grep -oP 'LH:\K\d+' lcov.info | awk '{s+=$1} END {print s}')
+          COVERAGE_PERCENT=$(awk "BEGIN {printf \"%.2f\", ($LH/$LF)*100}")
+          echo "Coverage Percentage: $COVERAGE_PERCENT%"
+          echo "COVERAGE_PERCENT=$COVERAGE_PERCENT" >> $GITHUB_ENV
+
+      - name: Update Dynamic Badge
+        run: |
+          curl -X GET "https://img.shields.io/badge/coverage-$COVERAGE_PERCENT%25-blue.svg" -o .github/coverage-badge.svg
+        env:
+          COVERAGE_PERCENT: ${{ env.COVERAGE_PERCENT }}
+
+      - name: Commit Coverage Report
+        run: |
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          git add -A
+          git commit -m "Update coverage report"
+          git push

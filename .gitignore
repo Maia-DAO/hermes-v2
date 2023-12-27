@@ -1,0 +1,8 @@
+# Foundry
+cache/
+out/
+.env
+
+#Generated Docs
+docs/
+venv/
