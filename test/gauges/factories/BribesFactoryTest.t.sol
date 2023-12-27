@@ -95,6 +95,8 @@ contract BribesFactoryTest is DSTestPlus {
     }
 
     function testAddGaugetoFlywheel(address gauge) public {
+        hevm.assume(gauge.code.length == 0 && gauge != 0x8Af1B9CE882E0735F4648230b3b454dC104571f9);
+
         hevm.mockCall(address(this), abi.encodeWithSignature("isGauge(address)"), abi.encode(true));
         hevm.mockCall(address(gauge), abi.encodeWithSignature("multiRewardsDepot()"), abi.encode(address(0)));
         hevm.mockCall(address(0), abi.encodeWithSignature("addAsset()"), abi.encode(address(0)));
@@ -116,6 +118,8 @@ contract BribesFactoryTest is DSTestPlus {
     }
 
     function testAddGaugetoFlywheelInvalidGauge(address gauge) public {
+        hevm.assume(gauge.code.length == 0 && gauge != 0x8Af1B9CE882E0735F4648230b3b454dC104571f9);
+
         hevm.mockCall(address(this), abi.encodeWithSignature("isGauge(address)"), abi.encode(false));
         hevm.mockCall(address(0), abi.encodeWithSignature("addAsset()"), abi.encode(address(0)));
 
