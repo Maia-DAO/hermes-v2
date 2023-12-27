@@ -89,7 +89,7 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
     //////////////////////////////////////////////////////////////////
 
     function setUp() public {
-        vm.selectFork(vm.createFork(vm.envString("ARBITRUM_RPC_URL"), 164344948));
+        vm.selectFork(vm.createFork(vm.envString("ARBITRUM_RPC_URL"), 154344948));
 
         (uniswapV3Factory, nonfungiblePositionManager) = UniswapV3Assistant.deployUniswapV3();
 
