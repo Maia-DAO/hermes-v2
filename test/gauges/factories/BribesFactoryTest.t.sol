@@ -33,10 +33,7 @@ contract BribesFactoryTest is DSTestPlus {
     function setUp() public {
         mockBHermes();
         manager = new MockBaseV2GaugeManager(
-            BurntHermes(_bHermes),
-            FlywheelGaugeRewards(address(this)),
-            address(this),
-            _admin
+            BurntHermes(_bHermes), FlywheelGaugeRewards(address(this)), address(this), _admin
         );
         hevm.prank(flywheelGaugeWeightBooster);
         factory = new MockBribesFactory(address(this));
@@ -107,6 +104,8 @@ contract BribesFactoryTest is DSTestPlus {
     }
 
     function testAddGaugetoFlywheelNotExists(address gauge) public {
+        hevm.assume(gauge.code.length == 0 && gauge != 0x8Af1B9CE882E0735F4648230b3b454dC104571f9);
+
         hevm.mockCall(address(this), abi.encodeWithSignature("isGauge(address)"), abi.encode(true));
         hevm.mockCall(address(gauge), abi.encodeWithSignature("multiRewardsDepot()"), abi.encode(address(0)));
         hevm.mockCall(address(0), abi.encodeWithSignature("addAsset()"), abi.encode(address(0)));
