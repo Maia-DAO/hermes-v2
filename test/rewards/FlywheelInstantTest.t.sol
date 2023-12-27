@@ -31,10 +31,7 @@ contract FlywheelInstantTest is DSTestPlus {
         booster = new MockBooster();
 
         flywheel = new FlywheelCoreInstant(
-            address(rewardToken),
-            MockRewardsInstant(address(0)),
-            IFlywheelBooster(address(0)),
-            address(this)
+            address(rewardToken), MockRewardsInstant(address(0)), IFlywheelBooster(address(0)), address(this)
         );
 
         rewards = new MockRewardsInstant(flywheel);

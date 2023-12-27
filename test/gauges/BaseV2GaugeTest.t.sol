@@ -50,11 +50,7 @@ contract BaseV2GaugeTest is DSTestPlus {
         booster.transferOwnership(address(gaugeToken));
         booster.bribesFactory().transferOwnership(address(gaugeToken));
 
-        rewards = new FlywheelGaugeRewards(
-            address(rewardToken),
-            gaugeToken,
-            IBaseV2Minter(address(rewardsStream))
-        );
+        rewards = new FlywheelGaugeRewards(address(rewardToken), gaugeToken, IBaseV2Minter(address(rewardsStream)));
 
         hevm.mockCall(address(this), abi.encodeWithSignature("bHermesBoostToken()"), abi.encode(address(0)));
         hevm.mockCall(

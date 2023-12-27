@@ -79,10 +79,7 @@ contract BribesFactory is Ownable, IBribesFactory {
         bytes32 salt = keccak256(abi.encodePacked(bribeToken));
 
         flywheel = new FlywheelCore{salt: salt}(
-            bribeToken,
-            FlywheelBribeRewards(address(0)),
-            flywheelGaugeWeightBooster,
-            address(this)
+            bribeToken, FlywheelBribeRewards(address(0)), flywheelGaugeWeightBooster, address(this)
         );
 
         tokenToFlywheel[bribeToken] = flywheel;

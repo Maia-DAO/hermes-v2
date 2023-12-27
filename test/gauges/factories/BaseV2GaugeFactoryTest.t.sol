@@ -17,10 +17,7 @@ contract BaseV2GaugeFactoryTest is DSTestPlus {
 
     function setUp() public {
         factory = new MockBaseV2GaugeFactory(
-            BaseV2GaugeManager(gaugeManager),
-            bHermesBoost(_bHermesBoost),
-            BribesFactory(bribesFactory),
-            address(this)
+            BaseV2GaugeManager(gaugeManager), bHermesBoost(_bHermesBoost), BribesFactory(bribesFactory), address(this)
         );
     }
 

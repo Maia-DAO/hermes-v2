@@ -58,13 +58,7 @@ contract UniswapV3GaugeTest is DSTestPlus {
             address(this), abi.encodeWithSignature("bHermesBoostToken()"), abi.encode(bhermesToken.gaugeBoost())
         );
 
-        gauge = new UniswapV3Gauge(
-            FlywheelGaugeRewards(address(this)),
-            address(this),
-            address(this),
-            10,
-            address(this)
-        );
+        gauge = new UniswapV3Gauge(FlywheelGaugeRewards(address(this)), address(this), address(this), 10, address(this));
 
         depot = gauge.multiRewardsDepot();
 

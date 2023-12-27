@@ -50,8 +50,9 @@ abstract contract BaseV2Gauge is IBaseV2Gauge {
         hermesGaugeBoost = BaseV2GaugeFactory(msg.sender).bHermesBoostToken();
         strategy = _strategy;
 
-        multiRewardsDepot =
-        new MultiRewardsDepot{salt: keccak256(abi.encodePacked(this))}(address(BaseV2GaugeFactory(msg.sender).bribesFactory()));
+        multiRewardsDepot = new MultiRewardsDepot{salt: keccak256(abi.encodePacked(this))}(
+            address(BaseV2GaugeFactory(msg.sender).bribesFactory())
+        );
     }
 
     /*///////////////////////////////////////////////////////////////

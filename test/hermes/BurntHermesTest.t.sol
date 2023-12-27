@@ -31,11 +31,7 @@ contract BurntHermesTest is DSTestPlus {
 
         BurntHermes = new bHERMES(hermes, address(this), address(this));
 
-        rewards = new FlywheelGaugeRewards(
-            address(hermes),
-            BurntHermes.gaugeWeight(),
-            IBaseV2Minter(address(stream))
-        );
+        rewards = new FlywheelGaugeRewards(address(hermes), BurntHermes.gaugeWeight(), IBaseV2Minter(address(stream)));
     }
 
     function mintHelper(uint256 amount, address user) internal {

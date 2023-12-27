@@ -28,10 +28,7 @@ contract BaseV2GaugeManagerTest is DSTestPlus {
         hevm.mockCall(address(this), abi.encodeWithSignature("gaugeCycleLength()"), abi.encode(1));
         hevm.mockCall(address(this), abi.encodeWithSignature("gaugeCycle()"), abi.encode(type(uint32).max));
         manager = new MockBaseV2GaugeManager(
-            BurntHermes(_bHermes),
-            FlywheelGaugeRewards(address(this)),
-            address(this),
-            _admin
+            BurntHermes(_bHermes), FlywheelGaugeRewards(address(this)), address(this), _admin
         );
     }
 

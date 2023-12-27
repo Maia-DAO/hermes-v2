@@ -43,11 +43,7 @@ contract FlywheelGaugeRewardsTest is DSTestPlus {
         gaugeToken.delegate(address(this));
         flywheelBooster.transferOwnership(address(gaugeToken));
 
-        rewards = new FlywheelGaugeRewards(
-            address(rewardToken),
-            gaugeToken,
-            IBaseV2Minter(address(rewardsStream))
-        );
+        rewards = new FlywheelGaugeRewards(address(rewardToken), gaugeToken, IBaseV2Minter(address(rewardsStream)));
 
         hevm.mockCall(address(0), abi.encodeWithSignature("rewardToken()"), abi.encode(ERC20(address(0xDEAD))));
         hevm.mockCall(address(this), abi.encodeWithSignature("bribesFactory()"), abi.encode(address(this)));

@@ -29,10 +29,7 @@ contract FlywheelStrategyTest is DSTestPlus {
         booster = new MockBooster();
 
         flywheel = new FlywheelCore(
-            address(rewardToken),
-            MockRewardsStrategy(address(0)),
-            IFlywheelBooster(address(0)),
-            address(this)
+            address(rewardToken), MockRewardsStrategy(address(0)), IFlywheelBooster(address(0)), address(this)
         );
 
         rewards = new MockRewardsStrategy(flywheel);
