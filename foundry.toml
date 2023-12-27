@@ -5,6 +5,10 @@ libs = ["lib"]
 solc = "0.8.19"
 via_ir = true
 
+# Allow forge to write gas snapshots
+ffi = true
+fs_permissions = [{ access = "read-write", path = ".forge-snapshots/"}]
+
 memory_limit = 43554432
 # memory_limit = 33554432 # default limit
 
