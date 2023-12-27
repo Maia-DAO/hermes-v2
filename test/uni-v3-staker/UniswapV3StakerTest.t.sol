@@ -93,8 +93,6 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
 
         (uniswapV3Factory, nonfungiblePositionManager) = UniswapV3Assistant.deployUniswapV3();
 
-        hevm.warp(52 weeks);
-
         token1 = new MockERC20("test token", "TKN", 18);
         token0 = new MockERC20("test token", "TKN", 18);
         rewardToken = new MockERC20("test reward token", "RTKN", 18);
