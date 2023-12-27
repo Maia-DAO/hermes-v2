@@ -15,4 +15,7 @@ memory_limit = 43554432
 # Necessary for testing
 gas_price = 10000
 
+[profile.ci.fuzz]
+runs = 100000
+
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
