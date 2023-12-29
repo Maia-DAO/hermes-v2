@@ -8,7 +8,7 @@ on:
 
 env:
   FOUNDRY_PROFILE: ci
-  ARBITRUM_RPC_URL: https://arbitrum.llamarpc.com
+  ARBITRUM_RPC_URL: https://rpc.ankr.com/arbitrum
 
 jobs:
   forge-tests:
