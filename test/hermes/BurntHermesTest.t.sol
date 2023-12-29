@@ -47,7 +47,7 @@ contract BurntHermesTest is DSTestPlus {
     }
 
     function testClaimMultipleInsufficientShares(uint256 amount, address user) public {
-        if (amount != 0) {
+        if (amount != 0 && user != address(this)) {
             hevm.startPrank(user);
             mintHelper(amount, user);
             hevm.stopPrank();
