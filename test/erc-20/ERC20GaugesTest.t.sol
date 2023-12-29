@@ -217,34 +217,36 @@ contract ERC20GaugesTest is DSTestPlus {
     function testIncrement(address[8] memory from, address[8] memory gauges, uint112[8] memory amounts) public {
         token.setMaxDelegates(8);
         token.setMaxGauges(8);
-        unchecked {
-            uint112 sum;
-            for (uint256 i = 0; i < 8; i++) {
-                gauges[i] = address(new MockBaseV2Gauge(FlywheelGaugeRewards(address(0)), address(0)));
-                hevm.assume(
-                    amounts[i] > 0 && sum + amounts[i] >= sum && !token.isGauge(gauges[i]) && gauges[i] != address(0)
-                );
-                sum += amounts[i];
 
-                // Can't delegate to 0 address
-                if (from[i] == address(0)) from[i] = address(0xCAFE);
-                token.mint(from[i], amounts[i]);
-                hevm.prank(from[i]);
-                token.incrementDelegation(from[i], amounts[i]);
+        uint112 sum;
+        for (uint256 i = 0; i < 8; i++) {
+            gauges[i] = address(new MockBaseV2Gauge(FlywheelGaugeRewards(address(0)), address(0)));
 
-                uint112 userWeightBefore = token.getUserWeight(from[i]);
-                uint112 userGaugeWeightBefore = token.getUserGaugeWeight(from[i], gauges[i]);
-                uint112 gaugeWeightBefore = token.getGaugeWeight(gauges[i]);
+            if (sum == type(uint112).max) break;
 
-                token.addGauge(gauges[i]);
-                hevm.prank(from[i]);
-                token.incrementGauge(gauges[i], amounts[i]);
+            amounts[i] %= type(uint112).max - sum;
+            amounts[i]++;
 
-                assertEq(token.getUserWeight(from[i]), userWeightBefore + amounts[i]);
-                assertEq(token.totalWeight(), sum);
-                assertEq(token.getUserGaugeWeight(from[i], gauges[i]), userGaugeWeightBefore + amounts[i]);
-                assertEq(token.getGaugeWeight(gauges[i]), gaugeWeightBefore + amounts[i]);
-            }
+            sum += amounts[i];
+
+            // Can't delegate to 0 address
+            if (from[i] == address(0)) from[i] = address(0xCAFE);
+            token.mint(from[i], amounts[i]);
+            hevm.prank(from[i]);
+            token.incrementDelegation(from[i], amounts[i]);
+
+            uint112 userWeightBefore = token.getUserWeight(from[i]);
+            uint112 userGaugeWeightBefore = token.getUserGaugeWeight(from[i], gauges[i]);
+            uint112 gaugeWeightBefore = token.getGaugeWeight(gauges[i]);
+
+            token.addGauge(gauges[i]);
+            hevm.prank(from[i]);
+            token.incrementGauge(gauges[i], amounts[i]);
+
+            assertEq(token.getUserWeight(from[i]), userWeightBefore + amounts[i]);
+            assertEq(token.totalWeight(), sum);
+            assertEq(token.getUserGaugeWeight(from[i], gauges[i]), userGaugeWeightBefore + amounts[i]);
+            assertEq(token.getGaugeWeight(gauges[i]), gaugeWeightBefore + amounts[i]);
         }
     }
 
@@ -303,30 +305,32 @@ contract ERC20GaugesTest is DSTestPlus {
         token.setMaxDelegates(8);
         token.setMaxGauges(max % 8);
         token.setContractExceedMaxGauges(address(this), true);
-        unchecked {
-            uint112 sum;
-            for (uint256 i = 0; i < 8; i++) {
-                gauges[i] = address(new MockBaseV2Gauge(FlywheelGaugeRewards(address(0)), address(0)));
-                hevm.assume(
-                    amounts[i] > 0 && sum + amounts[i] >= sum && !token.isGauge(gauges[i]) && gauges[i] != address(0)
-                );
-                sum += amounts[i];
 
-                token.mint(address(this), amounts[i]);
-                hevm.prank(address(this));
-                token.incrementDelegation(address(this), amounts[i]);
+        uint112 sum;
+        for (uint256 i = 0; i < 8; i++) {
+            gauges[i] = address(new MockBaseV2Gauge(FlywheelGaugeRewards(address(0)), address(0)));
 
-                uint112 userGaugeWeightBefore = token.getUserGaugeWeight(address(this), gauges[i]);
-                uint112 gaugeWeightBefore = token.getGaugeWeight(gauges[i]);
+            if (sum == type(uint112).max) break;
 
-                token.addGauge(gauges[i]);
-                token.incrementGauge(gauges[i], amounts[i]);
+            amounts[i] %= type(uint112).max - sum;
+            amounts[i]++;
 
-                assertEq(token.getUserWeight(address(this)), sum);
-                assertEq(token.totalWeight(), sum);
-                assertEq(token.getUserGaugeWeight(address(this), gauges[i]), userGaugeWeightBefore + amounts[i]);
-                assertEq(token.getGaugeWeight(gauges[i]), gaugeWeightBefore + amounts[i]);
-            }
+            sum += amounts[i];
+
+            token.mint(address(this), amounts[i]);
+            hevm.prank(address(this));
+            token.incrementDelegation(address(this), amounts[i]);
+
+            uint112 userGaugeWeightBefore = token.getUserGaugeWeight(address(this), gauges[i]);
+            uint112 gaugeWeightBefore = token.getGaugeWeight(gauges[i]);
+
+            token.addGauge(gauges[i]);
+            token.incrementGauge(gauges[i], amounts[i]);
+
+            assertEq(token.getUserWeight(address(this)), sum);
+            assertEq(token.totalWeight(), sum);
+            assertEq(token.getUserGaugeWeight(address(this), gauges[i]), userGaugeWeightBefore + amounts[i]);
+            assertEq(token.getGaugeWeight(gauges[i]), gaugeWeightBefore + amounts[i]);
         }
     }
 

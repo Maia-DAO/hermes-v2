@@ -3,12 +3,11 @@ pragma solidity ^0.8.0;
 
 import {console2} from "forge-std/console2.sol";
 
-import {DSTestPlus} from "solmate/test/utils/DSTestPlus.sol";
-import {TestBase} from "forge-std/Base.sol";
+import {Test} from "forge-std/Test.sol";
 
 import {MockERC20MultiVotes, IERC20MultiVotes, ERC20MultiVotes} from "./mocks/MockERC20MultiVotes.t.sol";
 
-contract ERC20MultiVotesTest is DSTestPlus, TestBase {
+contract ERC20MultiVotesTest is Test {
     MockERC20MultiVotes token;
     address constant delegate1 = address(0xDEAD);
     address constant delegate2 = address(0xBEEF);
@@ -27,8 +26,8 @@ contract ERC20MultiVotesTest is DSTestPlus, TestBase {
     }
 
     function testSetMaxDelegatesNonOwnerFails() public {
-        hevm.prank(address(1));
-        hevm.expectRevert(abi.encodeWithSignature("Unauthorized()"));
+        vm.prank(address(1));
+        vm.expectRevert(abi.encodeWithSignature("Unauthorized()"));
         token.setMaxDelegates(7);
     }
 
@@ -38,13 +37,13 @@ contract ERC20MultiVotesTest is DSTestPlus, TestBase {
     }
 
     function testCanContractExceedMaxNonOwnerFails() public {
-        hevm.prank(address(1));
-        hevm.expectRevert(abi.encodeWithSignature("Unauthorized()"));
+        vm.prank(address(1));
+        vm.expectRevert(abi.encodeWithSignature("Unauthorized()"));
         token.setContractExceedMaxDelegates(address(this), true);
     }
 
     function testCanContractExceedMaxNonContractFails() public {
-        hevm.expectRevert(abi.encodeWithSignature("NonContractError()"));
+        vm.expectRevert(abi.encodeWithSignature("NonContractError()"));
         token.setContractExceedMaxDelegates(address(1), true);
     }
 
@@ -56,26 +55,29 @@ contract ERC20MultiVotesTest is DSTestPlus, TestBase {
     function testDelegate(address[8] memory from, address[8] memory delegates, uint224[8] memory amounts) public {
         token.setMaxDelegates(8);
 
-        unchecked {
-            uint224 sum;
-            for (uint256 i = 0; i < 8; i++) {
-                hevm.assume(
-                    amounts[i] > 0 && sum + amounts[i] >= sum && from[i] != address(0) && delegates[i] != address(0)
-                );
-                sum += amounts[i];
+        uint224 sum;
+        for (uint256 i = 0; i < 8; i++) {
+            if (from[i] == address(0)) from[i] = address(0xCAFE);
+            if (delegates[i] == address(0)) delegates[i] = address(0xCAFE);
 
-                token.mint(from[i], amounts[i]);
+            if (sum == type(uint224).max) break;
 
-                uint256 userDelegatedBefore = token.userDelegatedVotes(from[i]);
-                uint256 delegateVotesBefore = token.delegatesVotesCount(from[i], delegates[i]);
-                uint256 votesBefore = token.getVotes(delegates[i]);
+            amounts[i] %= type(uint224).max - sum;
+            amounts[i]++;
 
-                hevm.prank(from[i]);
-                token.incrementDelegation(delegates[i], amounts[i]);
-                require(token.delegatesVotesCount(from[i], delegates[i]) == delegateVotesBefore + amounts[i]);
-                require(token.userDelegatedVotes(from[i]) == userDelegatedBefore + amounts[i]);
-                require(token.getVotes(delegates[i]) == votesBefore + amounts[i]);
-            }
+            sum += amounts[i];
+
+            token.mint(from[i], amounts[i]);
+
+            uint256 userDelegatedBefore = token.userDelegatedVotes(from[i]);
+            uint256 delegateVotesBefore = token.delegatesVotesCount(from[i], delegates[i]);
+            uint256 votesBefore = token.getVotes(delegates[i]);
+
+            vm.prank(from[i]);
+            token.incrementDelegation(delegates[i], amounts[i]);
+            require(token.delegatesVotesCount(from[i], delegates[i]) == delegateVotesBefore + amounts[i]);
+            require(token.userDelegatedVotes(from[i]) == userDelegatedBefore + amounts[i]);
+            require(token.getVotes(delegates[i]) == votesBefore + amounts[i]);
         }
     }
 
@@ -83,7 +85,7 @@ contract ERC20MultiVotesTest is DSTestPlus, TestBase {
         token.mint(address(this), 100e18);
         token.setMaxDelegates(2);
 
-        hevm.expectRevert(abi.encodeWithSignature("DelegationError()"));
+        vm.expectRevert(abi.encodeWithSignature("DelegationError()"));
         token.incrementDelegation(address(0), 50e18);
     }
 
@@ -92,7 +94,7 @@ contract ERC20MultiVotesTest is DSTestPlus, TestBase {
         token.setMaxDelegates(2);
 
         token.incrementDelegation(delegate1, 50e18);
-        hevm.expectRevert(abi.encodeWithSignature("DelegationError()"));
+        vm.expectRevert(abi.encodeWithSignature("DelegationError()"));
         token.incrementDelegation(delegate2, 51e18);
     }
 
@@ -102,7 +104,7 @@ contract ERC20MultiVotesTest is DSTestPlus, TestBase {
 
         token.incrementDelegation(delegate1, 50e18);
         token.incrementDelegation(delegate2, 1e18);
-        hevm.expectRevert(abi.encodeWithSignature("DelegationError()"));
+        vm.expectRevert(abi.encodeWithSignature("DelegationError()"));
         token.incrementDelegation(address(this), 1e18);
     }
 
@@ -145,7 +147,7 @@ contract ERC20MultiVotesTest is DSTestPlus, TestBase {
         token.setMaxDelegates(2);
 
         token.incrementDelegation(delegate1, 50e18);
-        hevm.expectRevert(IERC20MultiVotes.UndelegationVoteError.selector);
+        vm.expectRevert(IERC20MultiVotes.UndelegationVoteError.selector);
         token.undelegate(delegate1, 51e18);
     }
 
@@ -155,12 +157,17 @@ contract ERC20MultiVotesTest is DSTestPlus, TestBase {
         address newDelegatee,
         uint112 mintAmount
     ) public {
-        hevm.assume(mintAmount >= beforeDelegateAmount && beforeDelegateAmount > 0);
+        mintAmount %= type(uint112).max;
+        mintAmount++;
+
+        beforeDelegateAmount %= mintAmount;
+        beforeDelegateAmount++;
+
         token.mint(address(this), mintAmount);
         token.setMaxDelegates(2);
 
         if (oldDelegatee == address(0)) {
-            hevm.expectRevert(abi.encodeWithSignature("DelegationError()"));
+            vm.expectRevert(abi.encodeWithSignature("DelegationError()"));
         }
 
         token.incrementDelegation(oldDelegatee, beforeDelegateAmount);
@@ -184,21 +191,26 @@ contract ERC20MultiVotesTest is DSTestPlus, TestBase {
         address newDelegatee,
         uint112 mintAmount
     ) public {
-        hevm.assume(delegatorPk != 0);
-        address owner = hevm.addr(delegatorPk);
+        if (delegatorPk == 0) delegatorPk++;
+        address owner = vm.addr(delegatorPk);
 
-        hevm.assume(mintAmount >= beforeDelegateAmount && beforeDelegateAmount > 0);
+        mintAmount %= type(uint112).max;
+        mintAmount++;
+
+        beforeDelegateAmount %= mintAmount;
+        beforeDelegateAmount++;
+
         token.mint(owner, mintAmount);
         token.setMaxDelegates(2);
 
         if (oldDelegatee == address(0)) {
-            hevm.expectRevert(abi.encodeWithSignature("DelegationError()"));
+            vm.expectRevert(abi.encodeWithSignature("DelegationError()"));
         }
 
-        hevm.prank(owner);
+        vm.prank(owner);
         token.incrementDelegation(oldDelegatee, beforeDelegateAmount);
 
-        (uint8 v, bytes32 r, bytes32 s) = hevm.sign(
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
             delegatorPk,
             keccak256(
                 abi.encodePacked(
@@ -230,74 +242,74 @@ contract ERC20MultiVotesTest is DSTestPlus, TestBase {
 
         token.incrementDelegation(delegate1, 4e18);
 
-        uint256 block1 = block.number;
-        require(token.numCheckpoints(delegate1) == 1);
+        uint256 block1 = 1;
+        assertEq(token.numCheckpoints(delegate1), 1);
         ERC20MultiVotes.Checkpoint memory checkpoint1 = token.checkpoints(delegate1, 0);
-        require(checkpoint1.fromBlock == block1);
-        require(checkpoint1.votes == 4e18);
+        assertEq(checkpoint1.fromBlock, block1);
+        assertEq(checkpoint1.votes, 4e18);
 
         // Same block increase voting power
         token.incrementDelegation(delegate1, 4e18);
 
-        require(token.numCheckpoints(delegate1) == 1);
+        assertEq(token.numCheckpoints(delegate1), 1);
         checkpoint1 = token.checkpoints(delegate1, 0);
-        require(checkpoint1.fromBlock == block1);
-        require(checkpoint1.votes == 8e18);
+        assertEq(checkpoint1.fromBlock, block1);
+        assertEq(checkpoint1.votes, 8e18);
 
         vm.roll(2);
-        uint256 block2 = block.number;
-        require(block2 == block1 + 1);
+        uint256 block2 = 2;
+        assertEq(block2, block1 + 1);
 
         // Next block decrease voting power
         token.undelegate(delegate1, 2e18);
 
-        require(token.numCheckpoints(delegate1) == 2); // new checkpint
+        assertEq(token.numCheckpoints(delegate1), 2); // new checkpint
 
         // checkpoint 1 stays same
         checkpoint1 = token.checkpoints(delegate1, 0);
-        require(checkpoint1.fromBlock == block1);
-        require(checkpoint1.votes == 8e18);
+        assertEq(checkpoint1.fromBlock, block1);
+        assertEq(checkpoint1.votes, 8e18);
 
         // new checkpoint 2
         ERC20MultiVotes.Checkpoint memory checkpoint2 = token.checkpoints(delegate1, 1);
-        require(checkpoint2.fromBlock == block2);
-        require(checkpoint2.votes == 6e18);
+        assertEq(checkpoint2.fromBlock, block2);
+        assertEq(checkpoint2.votes, 6e18);
 
         vm.roll(10);
-        uint256 block3 = block.number;
-        require(block3 == block2 + 8);
+        uint256 block3 = 10;
+        assertEq(block3, block2 + 8);
 
         // 10 blocks later increase voting power
         token.incrementDelegation(delegate1, 4e18);
 
-        require(token.numCheckpoints(delegate1) == 3); // new checkpint
+        assertEq(token.numCheckpoints(delegate1), 3); // new checkpint
 
         // checkpoint 1 stays same
         checkpoint1 = token.checkpoints(delegate1, 0);
-        require(checkpoint1.fromBlock == block1);
-        require(checkpoint1.votes == 8e18);
+        assertEq(checkpoint1.fromBlock, block1);
+        assertEq(checkpoint1.votes, 8e18);
 
         // checkpoint 2 stays same
         checkpoint2 = token.checkpoints(delegate1, 1);
-        require(checkpoint2.fromBlock == block2);
-        require(checkpoint2.votes == 6e18);
+        assertEq(checkpoint2.fromBlock, block2);
+        assertEq(checkpoint2.votes, 6e18);
 
         // new checkpoint 3
         ERC20MultiVotes.Checkpoint memory checkpoint3 = token.checkpoints(delegate1, 2);
-        require(checkpoint3.fromBlock == block3);
-        require(checkpoint3.votes == 10e18);
+        assertEq(checkpoint3.fromBlock, block3);
+        assertEq(checkpoint3.votes, 10e18);
 
         // finally, test getPriorVotes between checkpoints
-        require(token.getPriorVotes(delegate1, block1) == 8e18);
-        require(token.getPriorVotes(delegate1, block2) == 6e18);
-        require(token.getPriorVotes(delegate1, block2 + 4) == 6e18);
-        require(token.getPriorVotes(delegate1, block3 - 1) == 6e18);
+        assertEq(token.getPriorVotes(delegate1, block1), 8e18);
+        assertEq(token.getPriorVotes(delegate1, block2), 6e18);
+        assertEq(token.getPriorVotes(delegate1, block2 + 4), 6e18);
+        assertEq(token.getPriorVotes(delegate1, block3 - 1), 6e18);
 
-        hevm.expectRevert(abi.encodeWithSignature("BlockError()"));
+        vm.expectRevert(abi.encodeWithSignature("BlockError()"));
         token.getPriorVotes(delegate1, block3); // revert same block
 
         vm.roll(11);
-        require(token.getPriorVotes(delegate1, block3) == 10e18);
+        assertEq(token.getPriorVotes(delegate1, block3), 10e18);
     }
 
     /*///////////////////////////////////////////////////////////////
@@ -349,7 +361,7 @@ contract ERC20MultiVotesTest is DSTestPlus, TestBase {
         require(token.freeVotes(address(this)) == 70e18);
 
         token.approve(address(1), 100e18);
-        hevm.prank(address(1));
+        vm.prank(address(1));
         token.transferFrom(address(this), address(1), 90e18);
 
         require(token.freeVotes(address(this)) == 10e18);
