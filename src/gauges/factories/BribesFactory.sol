@@ -76,7 +76,7 @@ contract BribesFactory is Ownable, IBribesFactory {
         if (address(tokenToFlywheel[bribeToken]) != address(0)) revert BribeFlywheelAlreadyExists();
         if (bribeToken == address(0)) revert InvalidBribeToken();
 
-        bytes32 salt = keccak256(abi.encodePacked(bribeToken));
+        bytes32 salt = bytes32(bytes20(bribeToken));
 
         flywheel = new FlywheelCore{salt: salt}(
             bribeToken, FlywheelBribeRewards(address(0)), flywheelGaugeWeightBooster, address(this)
