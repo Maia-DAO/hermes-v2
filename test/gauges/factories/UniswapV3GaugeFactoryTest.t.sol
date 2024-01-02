@@ -130,7 +130,8 @@ contract UniswapV3GaugeFactoryTest is DSTestPlus {
     }
 
     function testCreateGauge(address strategy) public returns (address gauge) {
-        hevm.assume(strategy != address(0));
+        if (strategy == address(0)) strategy = address(0xBEEF);
+
         mockAddGauge(strategy);
 
         assertEq(address(factory.strategyGauges(strategy)), address(0));

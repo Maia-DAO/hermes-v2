@@ -24,7 +24,9 @@ contract MultiRewardsDepotTest is DSTestPlus {
     }
 
     function testAddAsset(address flywheelRewards, address asset) public {
-        hevm.assume(asset != address(0) && asset != address(rewardToken));
+        if (asset == address(0)) asset = address(0xBEEF);
+        if (asset == address(rewardToken)) asset = address(uint160(address(rewardToken)) + 1);
+
         depot.addAsset(flywheelRewards, asset);
     }
 
