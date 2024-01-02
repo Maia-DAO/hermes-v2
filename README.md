@@ -223,22 +223,22 @@ Update the following badge links for your repository:
 - Replace Maia DAO Discord link with your Discord server invite link.
 -->
 
-[version-badge]: https://img.shields.io/github/v/release/Maia-DAO/foundry-template
-[version-link]: https://github.com/Maia-DAO/foundry-template/releases
-[ci-badge]: https://github.com/Maia-DAO/foundry-template/actions/workflows/test.yml/badge.svg
-[ci-link]: https://github.com/Maia-DAO/foundry-template/actions/workflows/test.yml
-[lint-badge]: https://github.com/Maia-DAO/foundry-template/actions/workflows/lint.yml/badge.svg
-[lint-link]: https://github.com/Maia-DAO/foundry-template/actions/workflows/lint.yml
+[version-badge]: https://img.shields.io/github/v/release/Maia-DAO/hermes-v2
+[version-link]: https://github.com/Maia-DAO/hermes-v2/releases
+[ci-badge]: https://github.com/Maia-DAO/hermes-v2/actions/workflows/test.yml/badge.svg
+[ci-link]: https://github.com/Maia-DAO/hermes-v2/actions/workflows/test.yml
+[lint-badge]: https://github.com/Maia-DAO/hermes-v2/actions/workflows/lint.yml/badge.svg
+[lint-link]: https://github.com/Maia-DAO/hermes-v2/actions/workflows/lint.yml
 [coverage-badge]: .github/coverage-badge.svg
 [coverage-link]: .github/coverage-badge.svg
 [solidity-shield]: https://img.shields.io/badge/solidity-%5E0.8.0-aa6746
-[license-badge]: https://img.shields.io/github/license/Maia-DAO/foundry-template
-[license-link]: https://github.com/Maia-DAO/foundry-template/blob/main/LICENSE
+[license-badge]: https://img.shields.io/github/license/Maia-DAO/hermes-v2
+[license-link]: https://github.com/Maia-DAO/hermes-v2/blob/main/LICENSE
 [docs-badge]: https://img.shields.io/badge/Ecosystem-documentation-informational
 [docs-link]: https://v2-docs.maiadao.io/
-[discussions-badge]: https://img.shields.io/badge/foundry-template-discussions-blueviolet
-[discussions-link]: https://github.com/Maia-DAO/foundry-template/discussions
-[js-library-badge]: https://img.shields.io/badge/foundry-template.js-library-red
-[js-library-link]: https://github.com/Maia-DAO/foundry-template-js
+[discussions-badge]: https://img.shields.io/badge/hermes-v2-discussions-blueviolet
+[discussions-link]: https://github.com/Maia-DAO/hermes-v2/discussions
+[js-library-badge]: https://img.shields.io/badge/hermes-v2.js-library-red
+[js-library-link]: https://github.com/Maia-DAO/hermes-v2-js
 [discord-badge]: https://img.shields.io/static/v1?logo=discord&label=discord&message=Join&color=blue
 [discord-link]: https://discord.gg/maiadao
