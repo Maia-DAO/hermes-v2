@@ -76,8 +76,21 @@ contract FlywheelStrategyTest is DSTestPlus {
         flywheel.setBooster(IFlywheelBooster(address(1)));
     }
 
+    function parseAmount(uint128 amount) internal pure returns (uint128) {
+        return (amount % type(uint128).max) + 1;
+    }
+
+    function parseAmounts(uint128 amount1, uint128 amount2, uint128 amount3)
+        internal
+        pure
+        returns (uint128, uint128, uint128)
+    {
+        return (parseAmount(amount1), parseAmount(amount2), parseAmount(amount3));
+    }
+
     function testAccrue(uint128 userBalance1, uint128 userBalance2, uint128 rewardAmount) public {
-        hevm.assume(userBalance1 != 0 && userBalance2 != 0 && rewardAmount != 0);
+        (userBalance1, userBalance2, rewardAmount) = parseAmounts(userBalance1, userBalance2, rewardAmount);
+
         strategy.mint(user, userBalance1);
         strategy.mint(user2, userBalance2);
 
@@ -102,7 +115,7 @@ contract FlywheelStrategyTest is DSTestPlus {
     }
 
     function testAccrueTwoUsers(uint128 userBalance1, uint128 userBalance2, uint128 rewardAmount) public {
-        hevm.assume(userBalance1 != 0 && userBalance2 != 0 && rewardAmount != 0);
+        (userBalance1, userBalance2, rewardAmount) = parseAmounts(userBalance1, userBalance2, rewardAmount);
 
         strategy.mint(user, userBalance1);
         strategy.mint(user2, userBalance2);
@@ -219,9 +232,9 @@ contract FlywheelStrategyTest is DSTestPlus {
     }
 
     function testClaim(uint128 userBalance1, uint128 userBalance2, uint128 rewardAmount) public {
-        hevm.assume(userBalance1 != 0 && userBalance2 != 0 && rewardAmount != 0);
-
         testAccrue(userBalance1, userBalance2, rewardAmount);
+
+        (userBalance1, userBalance2, rewardAmount) = parseAmounts(userBalance1, userBalance2, rewardAmount);
         flywheel.claimRewards(user);
 
         uint256 diff = (rewardAmount * ONE) / (uint256(userBalance1) + userBalance2);
@@ -235,7 +248,7 @@ contract FlywheelStrategyTest is DSTestPlus {
     }
 
     function testBoost(uint128 userBalance1, uint128 userBalance2, uint128 rewardAmount, uint128 boost) public {
-        hevm.assume(userBalance1 != 0 && userBalance2 != 0 && rewardAmount != 0);
+        (userBalance1, userBalance2, rewardAmount) = parseAmounts(userBalance1, userBalance2, rewardAmount);
 
         booster.setBoost(user, boost);
 

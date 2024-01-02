@@ -83,8 +83,13 @@ contract FlywheelBribeRewardsTest is DSTestPlus {
         assertEq(rewards.endCycles(strategy), 1814400);
     }
 
+    function parseAmount(uint192 amount) internal pure returns (uint192) {
+        return (amount % type(uint192).max) + 1;
+    }
+
     function testFuzzGetAccruedRewardsUninitialized(uint192 amount) public {
-        hevm.assume(amount != 0);
+        amount = parseAmount(amount);
+
         assertEq(rewards.getAccruedRewards(strategy), 0);
         rewardToken.mint(address(depot), amount);
         assertEq(rewards.getAccruedRewards(strategy), 0);
@@ -92,7 +97,7 @@ contract FlywheelBribeRewardsTest is DSTestPlus {
     }
 
     function testFuzzGetAccruedRewards(uint192 amount) public {
-        hevm.assume(amount != 0);
+        amount = parseAmount(amount);
 
         rewardToken.mint(address(depot), amount);
 

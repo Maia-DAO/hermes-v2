@@ -250,8 +250,12 @@ contract ERC20GaugesTest is DSTestPlus {
         }
     }
 
+    function parseAmount(uint112 amount) internal pure returns (uint112) {
+        return (amount % type(uint112).max) + 1;
+    }
+
     function testIncrementDuringFreeze(uint112 amount, uint128 cycleOffset) public {
-        hevm.assume(amount != 0);
+        amount = parseAmount(amount);
 
         token.mint(address(this), amount);
         token.setMaxDelegates(1);
@@ -403,14 +407,13 @@ contract ERC20GaugesTest is DSTestPlus {
     }
 
     function testIncrementOverWeight(uint112 amount) public {
-        amount %= type(uint112).max;
+        amount %= type(uint112).max - 1;
         amount++;
 
         token.setMaxGauges(2);
         token.addGauge(gauge1);
         token.addGauge(gauge2);
 
-        hevm.assume(amount != type(uint112).max);
         token.mint(address(this), amount);
         token.setMaxDelegates(1);
         token.delegate(address(this));
@@ -595,7 +598,7 @@ contract ERC20GaugesTest is DSTestPlus {
     }
 
     function testDecrementOverWeight(uint112 amount) public {
-        amount %= type(uint112).max;
+        amount %= type(uint112).max - 1;
         amount++;
 
         token.setMaxGauges(2);
@@ -605,8 +608,6 @@ contract ERC20GaugesTest is DSTestPlus {
         token.mint(address(this), amount);
         token.setMaxDelegates(1);
         token.delegate(address(this));
-
-        hevm.assume(amount != type(uint112).max);
 
         assertEq(token.incrementGauge(gauge1, amount), amount);
         hevm.expectRevert(abi.encodeWithSignature("Panic(uint256)", 17));
