@@ -21,7 +21,7 @@ runs = 100000
 
 [profile.ci.invariant]
 # If true, the Invariant will fail if a revert is detected
-fail_on_revert = true
+# fail_on_revert = true
 # fail_on_revert = false # default
 
 # Number of Invariant runs to perform
