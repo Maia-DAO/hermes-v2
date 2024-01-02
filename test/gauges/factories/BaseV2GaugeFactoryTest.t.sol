@@ -30,7 +30,7 @@ contract BaseV2GaugeFactoryTest is DSTestPlus {
     }
 
     function mockStrategy(address gauge) public {
-        // HEVM address: cant be mocked (https://github.com/dapphub/dapptools/blob/master/src/hevm/README.md)
+        // HEVM address: cant be mocked (https://github.com/dapphub/dapptools/blob/master/src/hevm/README.md#cheat-codes)
         hevm.assume(address(gauge) != address(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D));
         hevm.mockCall(gauge, abi.encodeWithSignature("strategy()"), abi.encode(gauge));
     }
@@ -40,7 +40,7 @@ contract BaseV2GaugeFactoryTest is DSTestPlus {
     }
 
     function mockAddBribeToGauge(address gauge) public {
-        // HEVM address: cant be mocked (https://github.com/dapphub/dapptools/blob/master/src/hevm/README.md)
+        // HEVM address: cant be mocked (https://github.com/dapphub/dapptools/blob/master/src/hevm/README.md#cheat-codes)
         hevm.assume(address(gauge) != address(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D));
         mockBribesFactoryOwner(address(this));
         hevm.mockCall(bribesFactory, abi.encodeWithSignature("flywheelTokens(address)"), abi.encode(gauge));
@@ -51,7 +51,7 @@ contract BaseV2GaugeFactoryTest is DSTestPlus {
     }
 
     function mockRemoveBribeFromGauge(address gauge) public {
-        // HEVM address: cant be mocked (https://github.com/dapphub/dapptools/blob/master/src/hevm/README.md)
+        // HEVM address: cant be mocked (https://github.com/dapphub/dapptools/blob/master/src/hevm/README.md#cheat-codes)
         hevm.assume(address(gauge) != address(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D));
         mockBribesFactoryOwner(address(this));
         hevm.mockCall(bribesFactory, abi.encodeWithSignature("flywheelTokens(address)"), abi.encode(gauge));
@@ -64,8 +64,8 @@ contract BaseV2GaugeFactoryTest is DSTestPlus {
     }
 
     function testNewEpoch(uint80 gauge) public {
-        address gauge1 = address(uint160(gauge));
-        address gauge2 = address(uint160(gauge) + 1);
+        address gauge1 = address(uint160(gauge) + 1);
+        address gauge2 = address(uint160(gauge) + 2);
 
         testCreateGauge(gauge1);
 
@@ -82,10 +82,10 @@ contract BaseV2GaugeFactoryTest is DSTestPlus {
     }
 
     function testNewEpochRangeSetup(uint80 gauge) public returns (address, address) {
-        address gauge1 = address(uint160(gauge));
-        address gauge2 = address(uint160(gauge) + 1);
-        address gauge3 = address(uint160(gauge) + 2);
-        address gauge4 = address(uint160(gauge) + 3);
+        address gauge1 = address(uint160(gauge) + 1);
+        address gauge2 = address(uint160(gauge) + 2);
+        address gauge3 = address(uint160(gauge) + 3);
+        address gauge4 = address(uint160(gauge) + 4);
 
         testCreateGauge(gauge1);
         testCreateGauge(gauge2);
@@ -150,7 +150,8 @@ contract BaseV2GaugeFactoryTest is DSTestPlus {
     }
 
     function testCreateGauge(address strategy) public {
-        hevm.assume(strategy != address(0));
+        if (strategy == address(0)) strategy = address(0xBEEF);
+
         mockAddGauge(strategy);
 
         assertEq(address(factory.strategyGauges(strategy)), address(0));
