@@ -10,12 +10,26 @@ ffi = true
 fs_permissions = [{ access = "read-write", path = ".forge-snapshots/"}]
 
 memory_limit = 43554432
-# memory_limit = 33554432 # default limit
+# memory_limit = 33554432 # default
 
 # Necessary for testing
 gas_price = 10000
 
 [profile.ci.fuzz]
+# Number of Fuzzing runs to perform
 runs = 100000
+
+[profile.ci.invariant]
+# If true, the Invariant will fail if a revert is detected
+fail_on_revert = true
+# fail_on_revert = false # default
+
+# Number of Invariant runs to perform
+runs = 512
+# runs = 256 # default
+
+# Number of runs to perform per Invariant run
+depth = 30
+# depth = 15 # default
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
