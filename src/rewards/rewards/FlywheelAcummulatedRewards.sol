@@ -11,7 +11,7 @@ import {BaseFlywheelRewards, FlywheelCore} from "../base/BaseFlywheelRewards.sol
 
 import {IFlywheelAcummulatedRewards} from "../interfaces/IFlywheelAcummulatedRewards.sol";
 
-///  @title Flywheel Accumulated Rewards.
+///  @title Flywheel Accumulated Rewards
 abstract contract FlywheelAcummulatedRewards is BaseFlywheelRewards, IFlywheelAcummulatedRewards {
     using SafeCastLib for uint256;
 

@@ -8,7 +8,7 @@ import {ERC20Gauges} from "@ERC20/ERC20Gauges.sol";
 import {IbHermesUnderlying} from "../interfaces/IbHermesUnderlying.sol";
 
 /**
- * @title bHermesGauges: Directs Hermes emissions.
+ * @title bHermesGauges: Directs Hermes emissions and receives fees/bribes
  * @author Maia DAO (https://github.com/Maia-DAO)
  *  @notice Represents the underlying emission direction power of a BurntHermes token.
  *          bHermesGauges is an ERC-4626 compliant BurntHermes token which:

@@ -23,7 +23,7 @@ import {RewardMath} from "./libraries/RewardMath.sol";
 
 import {IUniswapV3Staker} from "./interfaces/IUniswapV3Staker.sol";
 
-/// @title Uniswap V3 Staker Interface with BurntHermes Boost.
+/// @title Uniswap V3 Staker with BurntHermes Boost
 contract UniswapV3Staker is IUniswapV3Staker, Multicallable {
     using SafeTransferLib for address;
 

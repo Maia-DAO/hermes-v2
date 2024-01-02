@@ -16,7 +16,7 @@ import {BaseV2GaugeFactory} from "./factories/BaseV2GaugeFactory.sol";
 
 import {IBaseV2Gauge} from "./interfaces/IBaseV2Gauge.sol";
 
-/// @title Base V2 Gauge - Base contract for handling liquidity provider incentives and voter's bribes.
+/// @title Base V2 Gauge - Base contract for handling liquidity provider incentives
 abstract contract BaseV2Gauge is IBaseV2Gauge {
     using SafeTransferLib for address;
 

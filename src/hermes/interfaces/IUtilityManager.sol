@@ -6,7 +6,7 @@ import {bHermesGauges} from "../tokens/bHermesGauges.sol";
 import {bHermesVotes as ERC20Votes} from "../tokens/bHermesVotes.sol";
 
 /**
- * @title Utility Tokens Manager Contract.
+ * @title Utility Tokens Manager Contract
  *  @author Maia DAO (https://github.com/Maia-DAO)
  *  @notice When implemented, this contract allows for the management
  *          of BurntHermes utility tokens.

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title  An ERC20 with an embedded attachment mechanism to keep track of boost allocations to gauges.
+ * @title  An ERC20 with an embedded attachment mechanism to keep track of boost allocations to gauges
  *  @author Maia DAO (https://github.com/Maia-DAO)
  *  @notice This contract is meant to be used to represent a token that can boost holders' rewards in other contracts.
  *          Holders can have their boost attached to gauges and cannot transfer their BurntHermes until they detach it.

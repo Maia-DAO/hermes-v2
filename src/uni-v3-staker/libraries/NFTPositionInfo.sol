@@ -6,7 +6,7 @@ import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 
-// TODO: The INIT_CODE_HASH needs to be updated to the values that are live on the chain of it's deployment.
+// Notice that INIT_CODE_HASH needs to be updated to the values that are live on the chain of it's deployment.
 import {PoolAddress} from "@uniswap/v3-periphery/contracts/libraries/PoolAddress.sol";
 
 /// @title Encapsulates the logic for getting info about a NFT token ID
