@@ -13,7 +13,7 @@ env:
 jobs:
   forge-tests:
     name: Forge Tests
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, x64]
 
     steps:
       - uses: actions/checkout@v4
