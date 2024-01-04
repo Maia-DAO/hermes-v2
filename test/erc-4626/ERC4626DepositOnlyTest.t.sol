@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import {DSTestPlus} from "solmate/test/utils/DSTestPlus.sol";
 import {MockERC20} from "solmate/test/utils/mocks/MockERC20.sol";
 
-import {MockERC4626DepositOnly} from "./mocks/MockERC4626DepositOnly.t.sol";
+import {MockERC4626DepositOnly, ERC4626DepositOnly} from "./mocks/MockERC4626DepositOnly.t.sol";
 
 contract ERC4626DepositOnlyTest is DSTestPlus {
     MockERC20 underlying;
@@ -19,6 +19,18 @@ contract ERC4626DepositOnlyTest is DSTestPlus {
         assertEq(vault.name(), "Mock Token Vault");
         assertEq(vault.symbol(), "vwTKN");
         assertEq(vault.decimals(), 18);
+
+        assertEq(vault.maxDeposit(address(this)), type(uint256).max);
+        assertEq(vault.maxMint(address(this)), type(uint256).max);
+        assertEq(vault.maxWithdraw(address(this)), 0);
+        assertEq(vault.maxRedeem(address(this)), 0);
+    }
+
+    function testInitialMaxValues(address user) public {
+        assertEq(vault.maxDeposit(user), type(uint256).max);
+        assertEq(vault.maxMint(user), type(uint256).max);
+        assertEq(vault.maxWithdraw(user), 0);
+        assertEq(vault.maxRedeem(user), 0);
     }
 
     function testMetadata(string calldata name, string calldata symbol) public {
@@ -75,6 +87,9 @@ contract ERC4626DepositOnlyTest is DSTestPlus {
 
         hevm.prank(alice);
         uint256 aliceUnderlyingAmount = vault.mint(aliceShareAmount, alice);
+
+        assertEq(vault.maxWithdraw(alice), 0);
+        assertEq(vault.maxRedeem(alice), 0);
 
         assertEq(vault.afterDepositHookCalledCounter(), 1);
 
@@ -299,5 +314,25 @@ contract ERC4626DepositOnlyTest is DSTestPlus {
         assertEq(vault.balanceOf(alice), 1e18);
         assertEq(vault.balanceOf(bob), 1e18);
         assertEq(underlying.balanceOf(bob), 0);
+    }
+
+    function testWithdrawFail() public {
+        hevm.expectRevert(ERC4626DepositOnly.DepositOnly.selector);
+        vault.withdraw(1e18, address(this), address(this));
+    }
+
+    function testRedeemFail() public {
+        hevm.expectRevert(ERC4626DepositOnly.DepositOnly.selector);
+        vault.redeem(1e18, address(this), address(this));
+    }
+
+    function testPreviewWithdrawFail() public {
+        hevm.expectRevert(ERC4626DepositOnly.DepositOnly.selector);
+        vault.previewWithdraw(1e18);
+    }
+
+    function testPreviewRedeemFail() public {
+        hevm.expectRevert(ERC4626DepositOnly.DepositOnly.selector);
+        vault.previewRedeem(1e18);
     }
 }

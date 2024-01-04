@@ -9,7 +9,7 @@ import {FlywheelBoosterGaugeWeight} from "@rewards/booster/FlywheelBoosterGaugeW
 
 import {MockBaseV2Gauge, FlywheelGaugeRewards, ERC20} from "../gauges/mocks/MockBaseV2Gauge.sol";
 
-import {MockERC20Gauges, ERC20Gauges} from "./mocks/MockERC20Gauges.t.sol";
+import {MockERC20Gauges, ERC20Gauges, IERC20Gauges} from "./mocks/MockERC20Gauges.t.sol";
 
 contract ERC20GaugesTest is DSTestPlus {
     FlywheelBoosterGaugeWeight flywheelBooster;
@@ -38,6 +38,16 @@ contract ERC20GaugesTest is DSTestPlus {
     /*///////////////////////////////////////////////////////////////
                         TEST ADMIN GAUGE OPERATIONS
     //////////////////////////////////////////////////////////////*/
+
+    function testSetFlywheelBooster(address booster) public {
+        if (booster == address(0)) {
+            hevm.expectRevert(IERC20Gauges.InvalidBooster.selector);
+            token.setFlywheelBooster(booster);
+        } else {
+            token.setFlywheelBooster(booster);
+            assertEq(address(token.flywheelBooster()), address(booster));
+        }
+    }
 
     function testSetMaxGauges(uint256 max) public {
         token.setMaxGauges(max);
@@ -196,8 +206,12 @@ contract ERC20GaugesTest is DSTestPlus {
         token.addGauge(gauge1);
         token.addGauge(gauge2);
 
+        assertFalse(token.isUserGauge(address(this), gauge1));
+        assertFalse(token.isUserGauge(address(this), gauge2));
         assertEq(token.incrementGauge(gauge1, 1e18), 1e18);
         assertEq(token.incrementGauge(gauge2, 1e18), 2e18);
+        assertTrue(token.isUserGauge(address(this), gauge1));
+        assertTrue(token.isUserGauge(address(this), gauge2));
 
         hevm.warp(1 weeks); // warp 1 week to store changes
         assertEq(token.calculateGaugeAllocation(gauge1, 100e18), 50e18);
@@ -242,6 +256,7 @@ contract ERC20GaugesTest is DSTestPlus {
             token.addGauge(gauges[i]);
             hevm.prank(from[i]);
             token.incrementGauge(gauges[i], amounts[i]);
+            assertTrue(token.isUserGauge(from[i], gauges[i]));
 
             assertEq(token.getUserWeight(from[i]), userWeightBefore + amounts[i]);
             assertEq(token.totalWeight(), sum);
@@ -623,19 +638,27 @@ contract ERC20GaugesTest is DSTestPlus {
         token.addGauge(gauge1);
         token.addGauge(gauge2);
 
+        assertFalse(token.isUserGauge(address(this), gauge1));
         token.incrementGauge(gauge1, 1e18);
+        assertTrue(token.isUserGauge(address(this), gauge1));
 
         address[] memory gaugeList = new address[](2);
         uint112[] memory weights = new uint112[](2);
-        gaugeList[0] = gauge2;
-        gaugeList[1] = gauge1;
-        weights[0] = 2e18;
-        weights[1] = 4e18;
-
-        assertEq(token.incrementGauges(gaugeList, weights), 7e18);
-
+        gaugeList[0] = gauge1;
+        gaugeList[1] = gauge2;
+        weights[0] = 4e18;
         weights[1] = 2e18;
+
+        assertFalse(token.isUserGauge(address(this), gauge2));
+        assertEq(token.incrementGauges(gaugeList, weights), 7e18);
+        assertTrue(token.isUserGauge(address(this), gauge2));
+
+        assertEq(keccak256(abi.encode(token.userGauges(address(this)))), keccak256(abi.encode(gaugeList)));
+
+        weights[0] = 2e18;
         assertEq(token.decrementGauges(gaugeList, weights), 3e18);
+        assertTrue(token.isUserGauge(address(this), gauge1));
+        assertFalse(token.isUserGauge(address(this), gauge2));
 
         assertEq(token.getUserGaugeWeight(address(this), gauge2), 0);
         assertEq(token.getGaugeWeight(gauge2), 0);

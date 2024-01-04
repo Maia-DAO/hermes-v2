@@ -19,6 +19,18 @@ contract ERC4626Test is DSTestPlus {
         assertEq(vault.name(), "Mock Token Vault");
         assertEq(vault.symbol(), "vwTKN");
         assertEq(vault.decimals(), 18);
+
+        assertEq(vault.maxDeposit(address(this)), type(uint256).max);
+        assertEq(vault.maxMint(address(this)), type(uint256).max);
+        assertEq(vault.maxWithdraw(address(this)), 0);
+        assertEq(vault.maxRedeem(address(this)), 0);
+    }
+
+    function testInitialMaxValues(address user) public {
+        assertEq(vault.maxDeposit(user), type(uint256).max);
+        assertEq(vault.maxMint(user), type(uint256).max);
+        assertEq(vault.maxWithdraw(user), 0);
+        assertEq(vault.maxRedeem(user), 0);
     }
 
     function testMetadata(string calldata name, string calldata symbol) public {
@@ -45,6 +57,9 @@ contract ERC4626Test is DSTestPlus {
 
         hevm.prank(alice);
         uint256 aliceShareAmount = vault.deposit(aliceUnderlyingAmount, alice);
+
+        assertEq(vault.maxWithdraw(alice), aliceShareAmount);
+        assertEq(vault.maxRedeem(alice), aliceShareAmount);
 
         assertEq(vault.afterDepositHookCalledCounter(), 1);
 
@@ -86,6 +101,9 @@ contract ERC4626Test is DSTestPlus {
 
         hevm.prank(alice);
         uint256 aliceUnderlyingAmount = vault.mint(aliceShareAmount, alice);
+
+        assertEq(vault.maxWithdraw(alice), aliceShareAmount);
+        assertEq(vault.maxRedeem(alice), aliceShareAmount);
 
         assertEq(vault.afterDepositHookCalledCounter(), 1);
 

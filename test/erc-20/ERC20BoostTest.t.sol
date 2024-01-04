@@ -53,6 +53,8 @@ contract ERC20BoostTest is DSTestPlus {
         token.removeGauge(gauge1);
         require(token.deprecatedGauges()[0] == gauge1, "gauge1 not removed");
         assertFalse(token.isGauge(gauge1));
+
+        assertEq(token.numDeprecatedGauges(), 1);
     }
 
     function testNumGauges() public {
@@ -65,6 +67,8 @@ contract ERC20BoostTest is DSTestPlus {
         assertEq(token.deprecatedGauges().length, 0);
         testRemoveGauge();
         assertEq(token.deprecatedGauges().length, 1);
+
+        assertEq(token.numDeprecatedGauges(), token.deprecatedGauges().length);
     }
 
     function testFreeGaugeBoost() public {

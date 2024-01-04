@@ -181,6 +181,8 @@ contract BaseV2GaugeFactoryTest is DSTestPlus {
     }
 
     function testRemoveGauge(BaseV2Gauge gauge) public {
+        if (address(gauge) == address(0)) gauge = BaseV2Gauge(address(0xBEEF));
+
         mockRemoveGauge(address(gauge));
         mockStrategy(address(gauge));
 
@@ -198,6 +200,8 @@ contract BaseV2GaugeFactoryTest is DSTestPlus {
     }
 
     function testAlreadyRemoved(BaseV2Gauge gauge) public {
+        if (address(gauge) == address(0)) gauge = BaseV2Gauge(address(0xBEEF));
+
         testRemoveGauge(gauge);
 
         hevm.expectRevert(IBaseV2GaugeFactory.InvalidGauge.selector);
@@ -210,6 +214,8 @@ contract BaseV2GaugeFactoryTest is DSTestPlus {
     }
 
     function testRemoveInactive(BaseV2Gauge gauge) public {
+        if (address(gauge) == address(0)) gauge = BaseV2Gauge(address(0xBEEF));
+
         mockRemoveGauge(address(gauge));
         mockStrategy(address(gauge));
 
@@ -230,6 +236,8 @@ contract BaseV2GaugeFactoryTest is DSTestPlus {
     }
 
     function testGetGauges(BaseV2Gauge gauge, BaseV2Gauge gauge2) public {
+        if (address(gauge) == address(0)) gauge = BaseV2Gauge(address(0xBEEF));
+
         hevm.assume(address(gauge) != address(gauge2));
         mockStrategy(address(gauge));
         mockStrategy(address(gauge2));
