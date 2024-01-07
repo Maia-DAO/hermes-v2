@@ -16,7 +16,7 @@ import {IERC721Receiver} from "@openzeppelin/contracts/token/ERC721/IERC721Recei
 import {UniswapV3Factory, UniswapV3Pool} from "@uniswap/v3-core/contracts/UniswapV3Factory.sol";
 
 import {IWETH9} from "@uniswap/v3-periphery/contracts/interfaces/external/IWETH9.sol";
-import {NonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/NonfungiblePositionManager.sol";
+import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 
 import {
     UniswapV3GaugeFactory,
@@ -65,7 +65,7 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
     MockERC20 rewardToken;
 
     UniswapV3Factory uniswapV3Factory;
-    NonfungiblePositionManager nonfungiblePositionManager;
+    INonfungiblePositionManager nonfungiblePositionManager;
 
     IUniswapV3Pool pool;
     UniswapV3Pool poolContract;

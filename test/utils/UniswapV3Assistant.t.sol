@@ -13,10 +13,7 @@ import {MockERC20} from "solmate/test/utils/mocks/MockERC20.sol";
 import {TickMath} from "@uniswap/v3-core/contracts/libraries/TickMath.sol";
 import {UniswapV3Factory, UniswapV3Pool} from "@uniswap/v3-core/contracts/UniswapV3Factory.sol";
 
-import {
-    NonfungiblePositionManager,
-    INonfungiblePositionManager
-} from "@uniswap/v3-periphery/contracts/NonfungiblePositionManager.sol";
+import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 
 import {IUniswapV3Pool} from "@v3-staker/UniswapV3Staker.sol";
 
@@ -52,11 +49,11 @@ library UniswapV3Assistant {
     function deployUniswapV3()
         internal
         pure
-        returns (UniswapV3Factory factory, NonfungiblePositionManager nftManager)
+        returns (UniswapV3Factory factory, INonfungiblePositionManager nftManager)
     {
         /// @dev ! If reverting on minting check POOL_INIT_CODE_HASH in PoolAddress.sol
         factory = UniswapV3Factory(0x1F98431c8aD98523631AE4a59f267346ea31F984);
-        nftManager = NonfungiblePositionManager(payable(0xC36442b4a4522E871399CD717aBDD847Ab11FE88));
+        nftManager = INonfungiblePositionManager(payable(0xC36442b4a4522E871399CD717aBDD847Ab11FE88));
     }
 
     //////////////////////////////////////////////////////////////////
@@ -90,7 +87,7 @@ library UniswapV3Assistant {
 
     // Mint a position
     function mintPosition(
-        NonfungiblePositionManager nftManager,
+        INonfungiblePositionManager nftManager,
         address token0,
         address token1,
         uint24 fee,
@@ -118,7 +115,7 @@ library UniswapV3Assistant {
 
     // Mint a position max range
     function mintPositionMaxRange(
-        NonfungiblePositionManager nftManager,
+        INonfungiblePositionManager nftManager,
         address token0,
         address token1,
         uint24 fee,
