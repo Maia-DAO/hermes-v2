@@ -38,7 +38,7 @@ jobs:
 
       - name: Generate Coverage Report
         run: |
-          forge coverage --report lcov --ir-minimum
+          forge coverage --report lcov
         id: coverage
 
       - name: Extract Coverage Percentage
