@@ -237,6 +237,7 @@ contract BaseV2GaugeFactoryTest is DSTestPlus {
 
     function testGetGauges(BaseV2Gauge gauge, BaseV2Gauge gauge2) public {
         if (address(gauge) == address(0)) gauge = BaseV2Gauge(address(0xBEEF));
+        if (address(gauge2) == address(0)) gauge2 = BaseV2Gauge(address(0xDEAD));
 
         hevm.assume(address(gauge) != address(gauge2));
         mockStrategy(address(gauge));
