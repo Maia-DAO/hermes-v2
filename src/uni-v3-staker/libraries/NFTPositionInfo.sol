@@ -23,15 +23,14 @@ library NFTPositionInfo {
         INonfungiblePositionManager nonfungiblePositionManager,
         uint256 tokenId
     ) internal view returns (IUniswapV3Pool pool, int24 tickLower, int24 tickUpper, uint128 liquidity) {
-        address token0;
-        address token1;
-        uint24 fee;
-        /// @dev This line causes stack too deep when compiling with the optimizer turned off.
-        (,, token0, token1, fee, tickLower, tickUpper, liquidity,,,,) = nonfungiblePositionManager.positions(tokenId);
+        INonfungiblePositionManager.PositionParams memory position = nonfungiblePositionManager.positions(tokenId);
+
+        (tickUpper, tickLower, liquidity) = (position.tickUpper, position.tickLower, position.liquidity);
 
         pool = IUniswapV3Pool(
             PoolAddress.computeAddress(
-                address(factory), PoolAddress.PoolKey({token0: token0, token1: token1, fee: fee})
+                address(factory),
+                PoolAddress.PoolKey({token0: position.token0, token1: position.token1, fee: position.fee})
             )
         );
     }
