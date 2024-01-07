@@ -168,6 +168,8 @@ contract BaseV2GaugeFactoryTest is DSTestPlus {
     }
 
     function testAlreadyCreated(address strategy) public {
+        if (strategy == address(0)) strategy = address(0xBEEF);
+
         testCreateGauge(strategy);
 
         hevm.expectRevert(IBaseV2GaugeFactory.GaugeAlreadyExists.selector);
