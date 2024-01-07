@@ -242,7 +242,7 @@ contract ERC20MultiVotesTest is Test {
 
         token.incrementDelegation(delegate1, 4e18);
 
-        uint256 block1 = 1;
+        uint256 block1 = vm.getBlockNumber();
         assertEq(token.numCheckpoints(delegate1), 1);
         ERC20MultiVotes.Checkpoint memory checkpoint1 = token.checkpoints(delegate1, 0);
         assertEq(checkpoint1.fromBlock, block1);
@@ -257,7 +257,7 @@ contract ERC20MultiVotesTest is Test {
         assertEq(checkpoint1.votes, 8e18);
 
         vm.roll(2);
-        uint256 block2 = 2;
+        uint256 block2 = vm.getBlockNumber();
         assertEq(block2, block1 + 1);
 
         // Next block decrease voting power
@@ -276,7 +276,7 @@ contract ERC20MultiVotesTest is Test {
         assertEq(checkpoint2.votes, 6e18);
 
         vm.roll(10);
-        uint256 block3 = 10;
+        uint256 block3 = vm.getBlockNumber();
         assertEq(block3, block2 + 8);
 
         // 10 blocks later increase voting power
