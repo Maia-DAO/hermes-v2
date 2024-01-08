@@ -45,6 +45,7 @@ jobs:
       - name: Extract Coverage Percentage
         id: coverage-percentage
         run: |
+          awk '/^SF:.*test\// { skip = 1 } /^end_of_record/ { skip = 0 } !skip' lcov.info | awk '/^TN:$/ { getline; if ($0 == "end_of_record") next; print "TN:" } { print }' > temp_lcov.info && mv temp_lcov.info lcov.info
           LF=$(grep -oP 'LF:\K\d+' lcov.info | awk '{s+=$1} END {print s}')
           LH=$(grep -oP 'LH:\K\d+' lcov.info | awk '{s+=$1} END {print s}')
           COVERAGE_PERCENT=$(awk "BEGIN {printf \"%.2f\", ($LH/$LF)*100}")
