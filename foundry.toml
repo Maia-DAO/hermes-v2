@@ -9,9 +9,15 @@ via_ir = true
 ffi = true
 fs_permissions = [{ access = "read-write", path = ".forge-snapshots/"}]
 
+[profile.default.fuzz]
+# Number of Fuzzing runs to perform
+runs = 1000
+# runs = 256 # default
+
 [profile.ci.fuzz]
 # Number of Fuzzing runs to perform
 runs = 100000
+# runs = 256 # default
 
 [profile.ci.invariant]
 # If true, the Invariant will fail if a revert is detected
