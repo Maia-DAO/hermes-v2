@@ -13,7 +13,7 @@ env:
 jobs:
   forge-tests:
     name: Forge Tests
-    runs-on: [self-hosted, Linux, x64]
+    runs-on: ubuntu-latest
     timeout-minutes: 720
 
     steps:
