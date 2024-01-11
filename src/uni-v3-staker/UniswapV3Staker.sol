@@ -509,9 +509,11 @@ contract UniswapV3Staker is IUniswapV3Staker, Multicallable {
 
         UniswapV3Gauge gauge = gauges[pool]; // saves another SLOAD if no tokenId is attached
 
+        bool isBoosted;
         if (!hermesGaugeBoost.isUserGauge(tokenOwner, address(gauge))) {
             _userAttachements[tokenOwner][pool] = tokenId;
             gauge.attachUser(tokenOwner);
+            isBoosted = true;
         }
 
         deposit.stakedTimestamp = uint40(block.timestamp);
@@ -530,7 +532,7 @@ contract UniswapV3Staker is IUniswapV3Staker, Multicallable {
             stake.liquidityIfOverflow = liquidity;
         }
 
-        emit TokenStaked(tokenId, incentiveId, liquidity);
+        emit TokenStaked(tokenId, incentiveId, isBoosted);
     }
 
     /*//////////////////////////////////////////////////////////////

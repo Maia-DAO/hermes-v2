@@ -276,9 +276,9 @@ interface IUniswapV3Staker is IERC721Receiver {
 
     /// @notice Event emitted when a Uniswap V3 LP token has been staked
     /// @param tokenId The unique identifier of an Uniswap V3 LP token
-    /// @param liquidity The amount of liquidity staked
     /// @param incentiveId The incentive in which the token is staking
-    event TokenStaked(uint256 indexed tokenId, bytes32 indexed incentiveId, uint128 liquidity);
+    /// @param isBoosted Whether the staked tokenId is boosted
+    event TokenStaked(uint256 indexed tokenId, bytes32 indexed incentiveId, bool indexed isBoosted);
 
     /// @notice Event emitted when a Uniswap V3 LP token has been unstaked
     /// @param tokenId The unique identifier of an Uniswap V3 LP token
