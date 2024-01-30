@@ -39,9 +39,9 @@ contract IncentiveTimeTest is DSTestPlus {
         assertEq(end, 1624536000 + 7 days);
     }
 
-    function testFuzzComputeStart(uint96 timestamp) public {
-        timestamp %= (type(uint96).max - uint96(INCENTIVES_DURATION));
-        timestamp += uint96(INCENTIVES_DURATION);
+    function testFuzzComputeStart(uint64 timestamp) public {
+        timestamp %= (type(uint64).max - uint64(INCENTIVES_DURATION));
+        timestamp += uint64(INCENTIVES_DURATION);
 
         uint96 start = IncentiveTime.computeStart(timestamp);
         assertEq(
@@ -50,9 +50,15 @@ contract IncentiveTimeTest is DSTestPlus {
         );
     }
 
-    function testFuzzComputeEnd(uint96 timestamp) public {
-        timestamp %= (type(uint96).max - uint96(INCENTIVES_DURATION + 1));
-        timestamp += uint96(INCENTIVES_DURATION) + 1;
+    event log(uint256);
+
+    function testFuzzComputeEnd() public {
+        testFuzzComputeEnd(18446744073709551615);
+    }
+
+    function testFuzzComputeEnd(uint64 timestamp) public {
+        timestamp %= (type(uint64).max - uint64(INCENTIVES_DURATION + 1));
+        timestamp += uint64(INCENTIVES_DURATION) + 1;
 
         uint96 end = IncentiveTime.computeEnd(timestamp);
         assertEq(
