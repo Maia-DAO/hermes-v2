@@ -166,6 +166,8 @@ contract UniswapV3GaugeFactoryTest is DSTestPlus {
     }
 
     function testRemoveGauge(address strategy) public returns (BaseV2Gauge gauge) {
+        if (strategy == address(0)) strategy = address(0xBEEF);
+
         gauge = BaseV2Gauge(testCreateGauge(strategy));
 
         assertEq(address(factory.gauges(factory.gaugeIds(gauge))), address(gauge));

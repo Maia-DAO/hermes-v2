@@ -20,7 +20,7 @@ contract MockBurntHermes {
 }
 
 contract MockGauges {
-    function addGauge(address) external {}
+    function addGauge(address) external returns (uint112) {}
     function removeGauge(address) external {}
     function transferOwnership(address) external {}
 
@@ -151,18 +151,17 @@ contract BaseV2GaugeManagerTest is Test {
         manager.newEpoch(2, 10);
     }
 
-    // TODO - check failing test on mocked call
-    // function testAddGauge(address gauge) public {
-    //     if (gauge == address(0)) gauge = address(this);
+    function testAddGauge(address gauge) public {
+        if (gauge == address(0)) gauge = address(this);
 
-    //     testAddGaugeFactory(BaseV2GaugeFactory(gauge));
-    //     assertTrue(manager.activeGaugeFactories(BaseV2GaugeFactory(gauge)));
+        testAddGaugeFactory(BaseV2GaugeFactory(gauge));
+        assertTrue(manager.activeGaugeFactories(BaseV2GaugeFactory(gauge)));
 
-    //     expectBHermesAddGauge(gauge);
+        expectBHermesAddGauge(gauge);
 
-    //     vm.prank(gauge);
-    //     manager.addGauge(gauge);
-    // }
+        vm.prank(gauge);
+        manager.addGauge(gauge);
+    }
 
     function testAddGaugeNotGaugeFactory(address gauge) public {
         if (gauge == address(this)) gauge = address(1);

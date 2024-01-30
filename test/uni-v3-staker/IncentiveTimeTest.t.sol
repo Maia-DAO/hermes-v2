@@ -51,8 +51,8 @@ contract IncentiveTimeTest is DSTestPlus {
     }
 
     function testFuzzComputeEnd(uint96 timestamp) public {
-        timestamp %= (type(uint96).max - uint96(INCENTIVES_DURATION));
-        timestamp += uint96(INCENTIVES_DURATION);
+        timestamp %= (type(uint96).max - uint96(INCENTIVES_DURATION + 1));
+        timestamp += uint96(INCENTIVES_DURATION) + 1;
 
         uint96 end = IncentiveTime.computeEnd(timestamp);
         assertEq(
