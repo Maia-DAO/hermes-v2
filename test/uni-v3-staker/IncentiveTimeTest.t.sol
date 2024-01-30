@@ -50,12 +50,6 @@ contract IncentiveTimeTest is DSTestPlus {
         );
     }
 
-    event log(uint256);
-
-    function testFuzzComputeEnd() public {
-        testFuzzComputeEnd(18446744073709551615);
-    }
-
     function testFuzzComputeEnd(uint64 timestamp) public {
         timestamp %= (type(uint64).max - uint64(INCENTIVES_DURATION + 1));
         timestamp += uint64(INCENTIVES_DURATION) + 1;
