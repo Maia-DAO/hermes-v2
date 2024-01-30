@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity ^0.8.0;
 
+import {stdError} from "forge-std/StdError.sol";
+
 import {DSTestPlus} from "solmate/test/utils/DSTestPlus.sol";
 import {MockERC20} from "solmate/test/utils/mocks/MockERC20.sol";
 
@@ -84,6 +86,98 @@ contract ERC4626Test is DSTestPlus {
         assertEq(underlying.balanceOf(alice), alicePreDepositBal);
     }
 
+    function testSingleDepositWithdraw_allowance(uint128 amount, address spender) public {
+        if (amount == 0) amount = 1;
+
+        uint256 aliceUnderlyingAmount = amount;
+
+        address alice = address(0xABCD);
+
+        underlying.mint(alice, aliceUnderlyingAmount);
+
+        hevm.prank(alice);
+        underlying.approve(address(vault), aliceUnderlyingAmount);
+        assertEq(underlying.allowance(alice, address(vault)), aliceUnderlyingAmount);
+
+        uint256 alicePreDepositBal = underlying.balanceOf(alice);
+
+        hevm.prank(alice);
+        uint256 aliceShareAmount = vault.deposit(aliceUnderlyingAmount, alice);
+
+        assertEq(vault.maxWithdraw(alice), aliceShareAmount);
+        assertEq(vault.maxRedeem(alice), aliceShareAmount);
+
+        assertEq(vault.afterDepositHookCalledCounter(), 1);
+
+        // Expect exchange rate to be 1:1 on initial deposit.
+        assertEq(aliceUnderlyingAmount, aliceShareAmount);
+        assertEq(vault.previewWithdraw(aliceShareAmount), aliceUnderlyingAmount);
+        assertEq(vault.previewDeposit(aliceUnderlyingAmount), aliceShareAmount);
+        assertEq(vault.totalSupply(), aliceShareAmount);
+        assertEq(vault.totalAssets(), aliceUnderlyingAmount);
+        assertEq(vault.balanceOf(alice), aliceShareAmount);
+        assertEq(vault.convertToAssets(vault.balanceOf(alice)), aliceUnderlyingAmount);
+        assertEq(underlying.balanceOf(alice), alicePreDepositBal - aliceUnderlyingAmount);
+
+        hevm.prank(alice);
+        vault.approve(spender, aliceUnderlyingAmount);
+
+        hevm.prank(spender);
+        vault.withdraw(aliceUnderlyingAmount, alice, alice);
+
+        assertEq(vault.beforeWithdrawHookCalledCounter(), 1);
+
+        assertEq(vault.totalAssets(), 0);
+        assertEq(vault.balanceOf(alice), 0);
+        assertEq(vault.convertToAssets(vault.balanceOf(alice)), 0);
+        assertEq(underlying.balanceOf(alice), alicePreDepositBal);
+    }
+
+    function testSingleDepositWithdraw_noAllowance(uint128 amount, address spender) public {
+        if (amount == 0) amount = 1;
+
+        uint256 aliceUnderlyingAmount = amount;
+
+        address alice = address(0xABCD);
+
+        underlying.mint(alice, aliceUnderlyingAmount);
+
+        hevm.prank(alice);
+        underlying.approve(address(vault), aliceUnderlyingAmount);
+        assertEq(underlying.allowance(alice, address(vault)), aliceUnderlyingAmount);
+
+        uint256 alicePreDepositBal = underlying.balanceOf(alice);
+
+        hevm.prank(alice);
+        uint256 aliceShareAmount = vault.deposit(aliceUnderlyingAmount, alice);
+
+        assertEq(vault.maxWithdraw(alice), aliceShareAmount);
+        assertEq(vault.maxRedeem(alice), aliceShareAmount);
+
+        assertEq(vault.afterDepositHookCalledCounter(), 1);
+
+        // Expect exchange rate to be 1:1 on initial deposit.
+        assertEq(aliceUnderlyingAmount, aliceShareAmount);
+        assertEq(vault.previewWithdraw(aliceShareAmount), aliceUnderlyingAmount);
+        assertEq(vault.previewDeposit(aliceUnderlyingAmount), aliceShareAmount);
+        assertEq(vault.totalSupply(), aliceShareAmount);
+        assertEq(vault.totalAssets(), aliceUnderlyingAmount);
+        assertEq(vault.balanceOf(alice), aliceShareAmount);
+        assertEq(vault.convertToAssets(vault.balanceOf(alice)), aliceUnderlyingAmount);
+        assertEq(underlying.balanceOf(alice), alicePreDepositBal - aliceUnderlyingAmount);
+
+        hevm.expectRevert(stdError.arithmeticError);
+        hevm.prank(spender);
+        vault.withdraw(aliceUnderlyingAmount, alice, alice);
+
+        assertEq(vault.beforeWithdrawHookCalledCounter(), 0);
+
+        assertEq(vault.totalAssets(), aliceUnderlyingAmount);
+        assertEq(vault.balanceOf(alice), aliceShareAmount);
+        assertEq(vault.convertToAssets(vault.balanceOf(alice)), aliceUnderlyingAmount);
+        assertEq(underlying.balanceOf(alice), alicePreDepositBal - aliceUnderlyingAmount);
+    }
+
     function testSingleMintRedeem(uint128 amount) public {
         if (amount == 0) amount = 1;
 
@@ -126,6 +220,98 @@ contract ERC4626Test is DSTestPlus {
         assertEq(vault.balanceOf(alice), 0);
         assertEq(vault.convertToAssets(vault.balanceOf(alice)), 0);
         assertEq(underlying.balanceOf(alice), alicePreDepositBal);
+    }
+
+    function testSingleMintRedeem_allowance(uint128 amount, address spender) public {
+        if (amount == 0) amount = 1;
+
+        uint256 aliceShareAmount = amount;
+
+        address alice = address(0xABCD);
+
+        underlying.mint(alice, aliceShareAmount);
+
+        hevm.prank(alice);
+        underlying.approve(address(vault), aliceShareAmount);
+        assertEq(underlying.allowance(alice, address(vault)), aliceShareAmount);
+
+        uint256 alicePreDepositBal = underlying.balanceOf(alice);
+
+        hevm.prank(alice);
+        uint256 aliceUnderlyingAmount = vault.mint(aliceShareAmount, alice);
+
+        assertEq(vault.maxWithdraw(alice), aliceShareAmount);
+        assertEq(vault.maxRedeem(alice), aliceShareAmount);
+
+        assertEq(vault.afterDepositHookCalledCounter(), 1);
+
+        // Expect exchange rate to be 1:1 on initial mint.
+        assertEq(aliceShareAmount, aliceUnderlyingAmount);
+        assertEq(vault.previewWithdraw(aliceShareAmount), aliceUnderlyingAmount);
+        assertEq(vault.previewDeposit(aliceUnderlyingAmount), aliceShareAmount);
+        assertEq(vault.totalSupply(), aliceShareAmount);
+        assertEq(vault.totalAssets(), aliceUnderlyingAmount);
+        assertEq(vault.balanceOf(alice), aliceUnderlyingAmount);
+        assertEq(vault.convertToAssets(vault.balanceOf(alice)), aliceUnderlyingAmount);
+        assertEq(underlying.balanceOf(alice), alicePreDepositBal - aliceUnderlyingAmount);
+
+        hevm.prank(alice);
+        vault.approve(spender, aliceShareAmount);
+
+        hevm.prank(spender);
+        vault.redeem(aliceShareAmount, alice, alice);
+
+        assertEq(vault.beforeWithdrawHookCalledCounter(), 1);
+
+        assertEq(vault.totalAssets(), 0);
+        assertEq(vault.balanceOf(alice), 0);
+        assertEq(vault.convertToAssets(vault.balanceOf(alice)), 0);
+        assertEq(underlying.balanceOf(alice), alicePreDepositBal);
+    }
+
+    function testSingleMintRedeem_noAllowance(uint128 amount, address spender) public {
+        if (amount == 0) amount = 1;
+
+        uint256 aliceShareAmount = amount;
+
+        address alice = address(0xABCD);
+
+        underlying.mint(alice, aliceShareAmount);
+
+        hevm.prank(alice);
+        underlying.approve(address(vault), aliceShareAmount);
+        assertEq(underlying.allowance(alice, address(vault)), aliceShareAmount);
+
+        uint256 alicePreDepositBal = underlying.balanceOf(alice);
+
+        hevm.prank(alice);
+        uint256 aliceUnderlyingAmount = vault.mint(aliceShareAmount, alice);
+
+        assertEq(vault.maxWithdraw(alice), aliceShareAmount);
+        assertEq(vault.maxRedeem(alice), aliceShareAmount);
+
+        assertEq(vault.afterDepositHookCalledCounter(), 1);
+
+        // Expect exchange rate to be 1:1 on initial mint.
+        assertEq(aliceShareAmount, aliceUnderlyingAmount);
+        assertEq(vault.previewWithdraw(aliceShareAmount), aliceUnderlyingAmount);
+        assertEq(vault.previewDeposit(aliceUnderlyingAmount), aliceShareAmount);
+        assertEq(vault.totalSupply(), aliceShareAmount);
+        assertEq(vault.totalAssets(), aliceUnderlyingAmount);
+        assertEq(vault.balanceOf(alice), aliceUnderlyingAmount);
+        assertEq(vault.convertToAssets(vault.balanceOf(alice)), aliceUnderlyingAmount);
+        assertEq(underlying.balanceOf(alice), alicePreDepositBal - aliceUnderlyingAmount);
+
+        hevm.expectRevert(stdError.arithmeticError);
+        hevm.prank(spender);
+        vault.redeem(aliceShareAmount, alice, alice);
+
+        assertEq(vault.beforeWithdrawHookCalledCounter(), 0);
+
+        assertEq(vault.totalAssets(), aliceUnderlyingAmount);
+        assertEq(vault.balanceOf(alice), aliceUnderlyingAmount);
+        assertEq(vault.convertToAssets(vault.balanceOf(alice)), aliceUnderlyingAmount);
+        assertEq(underlying.balanceOf(alice), alicePreDepositBal - aliceUnderlyingAmount);
     }
 
     function testMultipleMintDepositRedeemWithdraw() public {

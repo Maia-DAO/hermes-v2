@@ -8,6 +8,7 @@ import {MockBooster} from "../mocks/MockBooster.sol";
 import "../mocks/MockRewardsStream.sol";
 
 import {BurntHermes as bHERMES} from "@hermes/BurntHermes.sol";
+import {IbHermesUnderlying} from "@hermes/interfaces/IbHermesUnderlying.sol";
 import {IUtilityManager} from "@hermes/interfaces/IUtilityManager.sol";
 
 import "@rewards/base/FlywheelCore.sol";
@@ -22,28 +23,43 @@ contract BurntHermesTest is DSTestPlus {
     MockERC20 hermes;
     MockBooster booster;
 
-    bHERMES BurntHermes;
+    bHERMES burntHermes;
 
     function setUp() public {
         hermes = new MockERC20("test hermes", "TKN", 18);
 
         strategy = new MockERC20("test strategy", "TKN", 18);
 
-        BurntHermes = new bHERMES(hermes, address(this), address(this));
+        burntHermes = new bHERMES(hermes, address(this), address(this));
 
-        rewards = new FlywheelGaugeRewards(address(hermes), BurntHermes.gaugeWeight(), IBaseV2Minter(address(stream)));
+        rewards = new FlywheelGaugeRewards(address(hermes), burntHermes.gaugeWeight(), IBaseV2Minter(address(stream)));
     }
 
     function mintHelper(uint256 amount, address user) internal {
         hermes.mint(user, amount);
-        hermes.approve(address(BurntHermes), amount);
-        BurntHermes.previewDeposit(amount);
-        BurntHermes.deposit(amount, user);
+        hermes.approve(address(burntHermes), amount);
+        burntHermes.previewDeposit(amount);
+        burntHermes.deposit(amount, user);
+    }
+
+    function testClaimOutstanding(uint256 amount, address user) public {
+        if (amount == 0) amount = 1;
+
+        hevm.startPrank(user);
+        mintHelper(amount, user);
+
+        burntHermes.claimOutstanding();
+        hevm.stopPrank();
+
+        assertEq(burntHermes.balanceOf(user), amount);
+        assertEq(burntHermes.gaugeWeight().balanceOf(user), amount);
+        assertEq(burntHermes.gaugeBoost().balanceOf(user), amount);
+        assertEq(burntHermes.governance().balanceOf(user), amount);
     }
 
     function testClaimMultipleInsufficientShares(uint256 amount) public {
         if (amount != 0) hevm.expectRevert(IUtilityManager.InsufficientShares.selector);
-        BurntHermes.claimMultiple(amount);
+        burntHermes.claimMultiple(amount);
     }
 
     function testClaimMultipleInsufficientShares(uint256 amount, address user) public {
@@ -69,57 +85,262 @@ contract BurntHermesTest is DSTestPlus {
         if (weight != 0 || boost != 0 || governance != 0) {
             hevm.expectRevert(IUtilityManager.InsufficientShares.selector);
         }
-        BurntHermes.claimMultipleAmounts(weight, boost, governance);
+        burntHermes.claimMultipleAmounts(weight, boost, governance);
     }
 
     function testClaimWeightInsufficientShares(uint256 amount) public {
         if (amount != 0) hevm.expectRevert(IUtilityManager.InsufficientShares.selector);
-        BurntHermes.claimWeight(amount);
+        burntHermes.claimWeight(amount);
     }
 
     function testClaimBoostInsufficientShares(uint256 amount) public {
         if (amount != 0) hevm.expectRevert(IUtilityManager.InsufficientShares.selector);
-        BurntHermes.claimBoost(amount);
+        burntHermes.claimBoost(amount);
     }
 
     function testClaimGovernanceInsufficientShares(uint256 amount) public {
         if (amount != 0) hevm.expectRevert(IUtilityManager.InsufficientShares.selector);
-        BurntHermes.claimGovernance(amount);
+        burntHermes.claimGovernance(amount);
     }
 
     function testMint() public {
         uint256 amount = 100 ether;
         hermes.mint(address(this), 100 ether);
-        hermes.approve(address(BurntHermes), amount);
-        BurntHermes.mint(amount, address(1));
-        assertEq(BurntHermes.balanceOf(address(1)), amount);
-        assertEq(BurntHermes.gaugeWeight().balanceOf(address(BurntHermes)), amount);
-        assertEq(BurntHermes.gaugeBoost().balanceOf(address(BurntHermes)), amount);
-        assertEq(BurntHermes.governance().balanceOf(address(BurntHermes)), amount);
+        hermes.approve(address(burntHermes), amount);
+        burntHermes.mint(amount, address(1));
+        assertEq(burntHermes.balanceOf(address(1)), amount);
+        assertEq(burntHermes.gaugeWeight().balanceOf(address(burntHermes)), amount);
+        assertEq(burntHermes.gaugeBoost().balanceOf(address(burntHermes)), amount);
+        assertEq(burntHermes.governance().balanceOf(address(burntHermes)), amount);
     }
 
     function testTransfer() public {
         testMint();
         hevm.prank(address(1));
-        BurntHermes.transfer(address(2), 100 ether);
-        assertEq(BurntHermes.balanceOf(address(1)), 0);
-        assertEq(BurntHermes.balanceOf(address(2)), 100 ether);
+        burntHermes.transfer(address(2), 100 ether);
+        assertEq(burntHermes.balanceOf(address(1)), 0);
+        assertEq(burntHermes.balanceOf(address(2)), 100 ether);
 
-        assertEq(BurntHermes.gaugeWeight().balanceOf(address(1)), 0);
-        assertEq(BurntHermes.gaugeWeight().balanceOf(address(BurntHermes)), 100 ether);
+        assertEq(burntHermes.gaugeWeight().balanceOf(address(1)), 0);
+        assertEq(burntHermes.gaugeWeight().balanceOf(address(burntHermes)), 100 ether);
 
-        assertEq(BurntHermes.gaugeBoost().balanceOf(address(1)), 0);
-        assertEq(BurntHermes.gaugeBoost().balanceOf(address(BurntHermes)), 100 ether);
+        assertEq(burntHermes.gaugeBoost().balanceOf(address(1)), 0);
+        assertEq(burntHermes.gaugeBoost().balanceOf(address(burntHermes)), 100 ether);
 
-        assertEq(BurntHermes.governance().balanceOf(address(1)), 0);
-        assertEq(BurntHermes.governance().balanceOf(address(BurntHermes)), 100 ether);
+        assertEq(burntHermes.governance().balanceOf(address(1)), 0);
+        assertEq(burntHermes.governance().balanceOf(address(burntHermes)), 100 ether);
     }
 
     function testTransferFailed() public {
         testMint();
         hevm.prank(address(1));
-        BurntHermes.claimWeight(1);
+        burntHermes.claimWeight(1);
         hevm.expectRevert(abi.encodeWithSignature("InsufficientUnderlying()"));
-        BurntHermes.transfer(address(2), 100 ether);
+        burntHermes.transfer(address(2), 100 ether);
+    }
+
+    function testTransferAndClaimOutstanding(uint256 amount, address user) public {
+        if (amount == 0) amount = 1;
+        if (user == address(this)) user = address(1);
+
+        hevm.startPrank(user);
+        mintHelper(amount, user);
+        burntHermes.transfer(address(this), amount);
+        hevm.stopPrank();
+
+        burntHermes.claimOutstanding();
+
+        assertEq(burntHermes.balanceOf(address(this)), amount);
+        assertEq(burntHermes.gaugeWeight().balanceOf(address(this)), amount);
+        assertEq(burntHermes.gaugeBoost().balanceOf(address(this)), amount);
+        assertEq(burntHermes.governance().balanceOf(address(this)), amount);
+    }
+
+    function testTransferNotEnoughWeight(uint256 amount, address user) public {
+        if (amount == 0) amount = 1;
+        if (user == address(this)) user = address(1);
+
+        hevm.startPrank(user);
+        mintHelper(amount, user);
+
+        burntHermes.claimWeight(amount);
+
+        hevm.expectRevert(bHERMES.InsufficientUnderlying.selector);
+        burntHermes.transfer(address(this), amount);
+        hevm.stopPrank();
+
+        assertEq(burntHermes.balanceOf(user), amount);
+        assertEq(burntHermes.gaugeWeight().balanceOf(user), amount);
+    }
+
+    function testTransferNotEnoughBoost(uint256 amount, address user) public {
+        if (amount == 0) amount = 1;
+        if (user == address(this)) user = address(1);
+
+        hevm.startPrank(user);
+        mintHelper(amount, user);
+
+        burntHermes.claimBoost(amount);
+
+        hevm.expectRevert(bHERMES.InsufficientUnderlying.selector);
+        burntHermes.transfer(address(this), amount);
+        hevm.stopPrank();
+
+        assertEq(burntHermes.balanceOf(user), amount);
+        assertEq(burntHermes.gaugeBoost().balanceOf(user), amount);
+    }
+
+    function testTransferNotEnoughGovernance(uint256 amount, address user) public {
+        if (amount == 0) amount = 1;
+        if (user == address(this)) user = address(1);
+
+        hevm.startPrank(user);
+        mintHelper(amount, user);
+
+        burntHermes.claimGovernance(amount);
+
+        hevm.expectRevert(bHERMES.InsufficientUnderlying.selector);
+        burntHermes.transfer(address(this), amount);
+        hevm.stopPrank();
+
+        assertEq(burntHermes.balanceOf(user), amount);
+        assertEq(burntHermes.governance().balanceOf(user), amount);
+    }
+
+    function testTransferNotEnoughUtilityTokens(uint256 amount, address user) public {
+        if (amount == 0) amount = 1;
+        if (user == address(this)) user = address(1);
+
+        hevm.startPrank(user);
+        mintHelper(amount, user);
+
+        burntHermes.claimOutstanding();
+
+        hevm.expectRevert(bHERMES.InsufficientUnderlying.selector);
+        burntHermes.transfer(address(this), amount);
+        hevm.stopPrank();
+
+        assertEq(burntHermes.balanceOf(user), amount);
+        assertEq(burntHermes.gaugeWeight().balanceOf(user), amount);
+        assertEq(burntHermes.gaugeBoost().balanceOf(user), amount);
+        assertEq(burntHermes.governance().balanceOf(user), amount);
+    }
+
+    function testTransferFromAndClaimOutstanding(uint256 amount, address user) public {
+        if (amount == 0) amount = 1;
+        if (user == address(this)) user = address(1);
+
+        hevm.startPrank(user);
+        mintHelper(amount, user);
+
+        burntHermes.approve(address(this), amount);
+        hevm.stopPrank();
+
+        burntHermes.transferFrom(user, address(this), amount);
+
+        burntHermes.claimOutstanding();
+
+        assertEq(burntHermes.balanceOf(address(this)), amount);
+        assertEq(burntHermes.gaugeWeight().balanceOf(address(this)), amount);
+        assertEq(burntHermes.gaugeBoost().balanceOf(address(this)), amount);
+        assertEq(burntHermes.governance().balanceOf(address(this)), amount);
+    }
+
+    function testTransferFromNotEnoughWeight(uint256 amount, address user) public {
+        if (amount == 0) amount = 1;
+        if (user == address(this)) user = address(1);
+
+        hevm.startPrank(user);
+        mintHelper(amount, user);
+
+        burntHermes.claimWeight(amount);
+
+        burntHermes.approve(address(this), amount);
+        hevm.stopPrank();
+
+        hevm.expectRevert(bHERMES.InsufficientUnderlying.selector);
+        burntHermes.transferFrom(user, address(this), amount);
+
+        assertEq(burntHermes.balanceOf(user), amount);
+        assertEq(burntHermes.gaugeWeight().balanceOf(user), amount);
+    }
+
+    function testTransferFromNotEnoughBoost(uint256 amount, address user) public {
+        if (amount == 0) amount = 1;
+        if (user == address(this)) user = address(1);
+
+        hevm.startPrank(user);
+        mintHelper(amount, user);
+
+        burntHermes.claimBoost(amount);
+
+        burntHermes.approve(address(this), amount);
+        hevm.stopPrank();
+
+        hevm.expectRevert(bHERMES.InsufficientUnderlying.selector);
+        burntHermes.transferFrom(user, address(this), amount);
+
+        assertEq(burntHermes.balanceOf(user), amount);
+        assertEq(burntHermes.gaugeBoost().balanceOf(user), amount);
+    }
+
+    function testTransferFromNotEnoughGovernance(uint256 amount, address user) public {
+        if (amount == 0) amount = 1;
+        if (user == address(this)) user = address(1);
+
+        hevm.startPrank(user);
+        mintHelper(amount, user);
+
+        burntHermes.claimGovernance(amount);
+
+        burntHermes.approve(address(this), amount);
+        hevm.stopPrank();
+
+        hevm.expectRevert(bHERMES.InsufficientUnderlying.selector);
+        burntHermes.transferFrom(user, address(this), amount);
+
+        assertEq(burntHermes.balanceOf(user), amount);
+        assertEq(burntHermes.governance().balanceOf(user), amount);
+    }
+
+    function testTransferFromNotEnoughUtilityTokens(uint256 amount, address user) public {
+        if (amount == 0) amount = 1;
+        if (user == address(this)) user = address(1);
+
+        hevm.startPrank(user);
+        mintHelper(amount, user);
+
+        burntHermes.claimOutstanding();
+
+        burntHermes.approve(address(this), amount);
+        hevm.stopPrank();
+
+        hevm.expectRevert(bHERMES.InsufficientUnderlying.selector);
+        burntHermes.transferFrom(user, address(this), amount);
+
+        assertEq(burntHermes.balanceOf(user), amount);
+        assertEq(burntHermes.gaugeWeight().balanceOf(user), amount);
+        assertEq(burntHermes.gaugeBoost().balanceOf(user), amount);
+        assertEq(burntHermes.governance().balanceOf(user), amount);
+    }
+
+    function testBurnbHermesVotes(uint256 amount, address user) public {
+        if (amount == 0) amount = 1;
+        if (user == address(this)) user = address(1);
+
+        hevm.startPrank(user);
+        mintHelper(amount, user);
+
+        burntHermes.claimOutstanding();
+        hevm.stopPrank();
+
+        hevm.startPrank(address(burntHermes));
+        burntHermes.governance().burn(user, amount);
+        hevm.stopPrank();
+
+        assertEq(burntHermes.balanceOf(user), amount);
+        assertEq(burntHermes.gaugeWeight().balanceOf(user), amount);
+        assertEq(burntHermes.gaugeBoost().balanceOf(user), amount);
+        assertEq(burntHermes.governance().balanceOf(user), 0);
     }
 }

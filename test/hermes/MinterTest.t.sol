@@ -5,10 +5,9 @@ import {console2} from "forge-std/console2.sol";
 
 import {DSTestPlus} from "solmate/test/utils/DSTestPlus.sol";
 
-import {MockERC20} from "solmate/test/utils/mocks/MockERC20.sol";
-
 import {BurntHermes} from "@hermes/BurntHermes.sol";
 import {IBaseV2Minter, BaseV2Minter, FlywheelGaugeRewards} from "@hermes/minters/BaseV2Minter.sol";
+import {HERMES} from "@hermes/tokens/HERMES.sol";
 
 contract BaseV2MinterTest is DSTestPlus {
     //////////////////////////////////////////////////////////////////
@@ -20,18 +19,20 @@ contract BaseV2MinterTest is DSTestPlus {
 
     FlywheelGaugeRewards flywheelGaugeRewards;
 
-    MockERC20 rewardToken;
+    HERMES rewardToken;
 
     //////////////////////////////////////////////////////////////////
     //                          SET UP
     //////////////////////////////////////////////////////////////////
 
     function setUp() public {
-        rewardToken = new MockERC20("test reward token", "RTKN", 18);
+        rewardToken = new HERMES(address(this));
 
         bHermesToken = new BurntHermes(rewardToken, address(this), address(this));
 
         baseV2Minter = new BaseV2Minter(address(bHermesToken), address(this), address(this));
+
+        rewardToken.transferOwnership(address(baseV2Minter));
 
         flywheelGaugeRewards = new FlywheelGaugeRewards(address(rewardToken), bHermesToken.gaugeWeight(), baseV2Minter);
 
@@ -93,6 +94,7 @@ contract BaseV2MinterTest is DSTestPlus {
         assertEq(baseV2Minter.circulatingSupply(), 0);
         baseV2Minter.initialize(flywheelGaugeRewards);
         assertEq(baseV2Minter.circulatingSupply(), 0);
+        hevm.prank(address(baseV2Minter));
         rewardToken.mint(address(this), 1000);
         assertEq(baseV2Minter.circulatingSupply(), 1000);
 
@@ -105,6 +107,7 @@ contract BaseV2MinterTest is DSTestPlus {
         assertEq(baseV2Minter.weeklyEmission(), 0);
         baseV2Minter.initialize(flywheelGaugeRewards);
         assertEq(baseV2Minter.weeklyEmission(), 0);
+        hevm.prank(address(baseV2Minter));
         rewardToken.mint(address(this), 1000);
         assertEq(baseV2Minter.weeklyEmission(), (1000 * 20) / 1000);
 
@@ -114,6 +117,7 @@ contract BaseV2MinterTest is DSTestPlus {
     }
 
     function testCalculateGrowth() public {
+        hevm.prank(address(baseV2Minter));
         rewardToken.mint(address(this), 1000);
         assertEq(baseV2Minter.calculateGrowth(1 ether), 0);
 
@@ -127,6 +131,7 @@ contract BaseV2MinterTest is DSTestPlus {
     }
 
     function testUpdatePeriod() public {
+        hevm.prank(address(baseV2Minter));
         rewardToken.mint(address(this), 1000);
         rewardToken.approve(address(bHermesToken), 500);
         bHermesToken.deposit(500, address(this));
@@ -147,7 +152,9 @@ contract BaseV2MinterTest is DSTestPlus {
     }
 
     function testUpdatePeriodMinterHasBalance() public {
+        hevm.prank(address(baseV2Minter));
         rewardToken.mint(address(baseV2Minter), 500);
+        hevm.prank(address(baseV2Minter));
         rewardToken.mint(address(this), 500);
         rewardToken.approve(address(bHermesToken), 500);
         bHermesToken.deposit(500, address(this));
@@ -168,6 +175,7 @@ contract BaseV2MinterTest is DSTestPlus {
     }
 
     function testUpdatePeriodFallback() public {
+        hevm.prank(address(baseV2Minter));
         rewardToken.mint(address(this), 1000);
         rewardToken.approve(address(bHermesToken), 500);
         bHermesToken.deposit(500, address(this));
@@ -191,6 +199,7 @@ contract BaseV2MinterTest is DSTestPlus {
     function testUpdatePeriodNoDao() public {
         baseV2Minter.setDao(address(0));
 
+        hevm.prank(address(baseV2Minter));
         rewardToken.mint(address(this), 1000);
         rewardToken.approve(address(bHermesToken), 500);
         bHermesToken.deposit(500, address(this));

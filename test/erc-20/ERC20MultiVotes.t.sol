@@ -120,6 +120,13 @@ contract ERC20MultiVotesTest is Test {
         require(token.delegateCount(address(this)) == 3);
         require(token.delegateCount(address(this)) > token.maxDelegates());
         require(token.userDelegatedVotes(address(this)) == 52e18);
+
+        address[] memory delegates = token.delegates(address(this));
+
+        require(delegates.length == 3);
+        require(delegates[0] == delegate1);
+        require(delegates[1] == delegate2);
+        require(delegates[2] == address(this));
     }
 
     /// @notice test undelegate twice, 2 tokens each after delegating by 4.

@@ -2,53 +2,67 @@
 pragma solidity ^0.8.0;
 
 import {console2} from "forge-std/console2.sol";
-import {DSTestPlus} from "solmate/test/utils/DSTestPlus.sol";
+import {Test} from "forge-std/Test.sol";
 
 import "../mocks/MockBaseV2GaugeManager.sol";
 
 error Unauthorized();
 error NotAdmin();
 
-contract BaseV2GaugeManagerTest is DSTestPlus {
-    address _bHermes = address(0xCAFE);
+contract MockBurntHermes {
+    bHermesGauges public immutable gaugeWeight;
+    bHermesBoost public immutable gaugeBoost;
+
+    constructor(address _gaugeWeight, address _gaugeBoost) {
+        gaugeWeight = bHermesGauges(_gaugeWeight);
+        gaugeBoost = bHermesBoost(_gaugeBoost);
+    }
+}
+
+contract MockGauges {
+    function addGauge(address) external {}
+    function removeGauge(address) external {}
+    function transferOwnership(address) external {}
+
+    function setFlywheelBooster(address) external {}
+}
+
+contract BaseV2GaugeManagerTest is Test {
+    address _bHermes;
     address _admin = address(0xBCAA);
 
-    address gaugeWeight = address(0xCAFD);
-    address gaugeBoost = address(0xCAFC);
+    address gaugeWeight = address(new MockGauges());
+    address gaugeBoost = address(new MockGauges());
 
     MockBaseV2GaugeManager manager;
 
-    function mockBHermes() public {
-        hevm.mockCall(_bHermes, abi.encodeWithSignature("gaugeWeight()"), abi.encode(gaugeWeight));
-        hevm.mockCall(_bHermes, abi.encodeWithSignature("gaugeBoost()"), abi.encode(gaugeBoost));
-    }
-
     function setUp() public {
-        mockBHermes();
-        hevm.mockCall(address(this), abi.encodeWithSignature("gaugeCycleLength()"), abi.encode(1));
-        hevm.mockCall(address(this), abi.encodeWithSignature("gaugeCycle()"), abi.encode(type(uint32).max));
+        _bHermes = address(new MockBurntHermes(gaugeWeight, gaugeBoost));
+
+        vm.mockCall(address(this), abi.encodeWithSignature("gaugeCycleLength()"), abi.encode(1));
+        vm.mockCall(address(this), abi.encodeWithSignature("gaugeCycle()"), abi.encode(type(uint32).max));
         manager = new MockBaseV2GaugeManager(
             BurntHermes(_bHermes), FlywheelGaugeRewards(address(this)), address(this), _admin
         );
     }
 
     function mockNewEpoch(address gaugeFactory) public {
-        hevm.mockCall(gaugeFactory, abi.encodeWithSignature("newEpoch()"), "");
+        vm.mockCall(gaugeFactory, abi.encodeWithSignature("newEpoch()"), "");
     }
 
-    function mockBHermesAddGauge() public {
-        hevm.mockCall(gaugeWeight, abi.encodeWithSignature("addGauge(address)"), "");
-        hevm.mockCall(gaugeBoost, abi.encodeWithSignature("addGauge(address)"), "");
+    function expectBHermesAddGauge(address gauge) public {
+        vm.expectCall(gaugeWeight, abi.encodeWithSignature("addGauge(address)", gauge));
+        vm.expectCall(gaugeBoost, abi.encodeWithSignature("addGauge(address)", gauge));
     }
 
-    function mockBHermesRemoveGauge() public {
-        hevm.mockCall(gaugeWeight, abi.encodeWithSignature("removeGauge(address)"), "");
-        hevm.mockCall(gaugeBoost, abi.encodeWithSignature("removeGauge(address)"), "");
+    function expectBHermesRemoveGauge(address gauge) public {
+        vm.expectCall(gaugeWeight, abi.encodeWithSignature("removeGauge(address)", gauge));
+        vm.expectCall(gaugeBoost, abi.encodeWithSignature("removeGauge(address)", gauge));
     }
 
-    function mockBHermesChangeOwner() public {
-        hevm.mockCall(gaugeWeight, abi.encodeWithSignature("transferOwnership(address)"), "");
-        hevm.mockCall(gaugeBoost, abi.encodeWithSignature("transferOwnership(address)"), "");
+    function expectBHermesChangeOwner(address newOwner) public {
+        vm.expectCall(gaugeWeight, abi.encodeWithSignature("transferOwnership(address)", newOwner));
+        vm.expectCall(gaugeBoost, abi.encodeWithSignature("transferOwnership(address)", newOwner));
     }
 
     function testNewEpoch(uint80 gaugeFactory) public {
@@ -65,7 +79,7 @@ contract BaseV2GaugeManagerTest is DSTestPlus {
 
         mockNewEpoch(gaugeFactory2);
 
-        hevm.expectCall(gaugeFactory2, abi.encodeWithSignature("newEpoch()"));
+        vm.expectCall(gaugeFactory2, abi.encodeWithSignature("newEpoch()"));
         manager.newEpoch();
     }
 
@@ -100,8 +114,8 @@ contract BaseV2GaugeManagerTest is DSTestPlus {
     function testNewEpochRangeBoth(uint80 gaugeFactory) public {
         (address gaugeFactory3, address gaugeFactory4) = testNewEpochRangeSetup(gaugeFactory);
 
-        hevm.expectCall(gaugeFactory3, abi.encodeWithSignature("newEpoch()"));
-        hevm.expectCall(gaugeFactory4, abi.encodeWithSignature("newEpoch()"));
+        vm.expectCall(gaugeFactory3, abi.encodeWithSignature("newEpoch()"));
+        vm.expectCall(gaugeFactory4, abi.encodeWithSignature("newEpoch()"));
         manager.newEpoch(0, 4);
     }
 
@@ -109,88 +123,98 @@ contract BaseV2GaugeManagerTest is DSTestPlus {
         (address gaugeFactory3, address gaugeFactory4) = testNewEpochRangeSetup(gaugeFactory);
 
         manager.changeActiveGaugeFactory(BaseV2GaugeFactory(gaugeFactory3), false);
-        hevm.expectCall(gaugeFactory4, abi.encodeWithSignature("newEpoch()"));
+        vm.expectCall(gaugeFactory4, abi.encodeWithSignature("newEpoch()"));
         manager.newEpoch(0, 4);
     }
 
     function testNewEpochRangeOver(uint80 gaugeFactory) public {
         (address gaugeFactory3, address gaugeFactory4) = testNewEpochRangeSetup(gaugeFactory);
 
-        hevm.expectCall(gaugeFactory3, abi.encodeWithSignature("newEpoch()"));
-        hevm.expectCall(gaugeFactory4, abi.encodeWithSignature("newEpoch()"));
+        vm.expectCall(gaugeFactory3, abi.encodeWithSignature("newEpoch()"));
+        vm.expectCall(gaugeFactory4, abi.encodeWithSignature("newEpoch()"));
         manager.newEpoch(0, 10);
     }
 
     function testNewEpochRangeUnder(uint80 gaugeFactory) public {
         (address gaugeFactory3, address gaugeFactory4) = testNewEpochRangeSetup(gaugeFactory);
 
-        hevm.expectCall(gaugeFactory3, abi.encodeWithSignature("newEpoch()"));
-        hevm.expectCall(gaugeFactory4, abi.encodeWithSignature("newEpoch()"));
+        vm.expectCall(gaugeFactory3, abi.encodeWithSignature("newEpoch()"));
+        vm.expectCall(gaugeFactory4, abi.encodeWithSignature("newEpoch()"));
         manager.newEpoch(2, 4);
     }
 
     function testNewEpochRangeOverUnder(uint80 gaugeFactory) public {
         (address gaugeFactory3, address gaugeFactory4) = testNewEpochRangeSetup(gaugeFactory);
 
-        hevm.expectCall(gaugeFactory3, abi.encodeWithSignature("newEpoch()"));
-        hevm.expectCall(gaugeFactory4, abi.encodeWithSignature("newEpoch()"));
+        vm.expectCall(gaugeFactory3, abi.encodeWithSignature("newEpoch()"));
+        vm.expectCall(gaugeFactory4, abi.encodeWithSignature("newEpoch()"));
         manager.newEpoch(2, 10);
     }
 
     // TODO - check failing test on mocked call
     // function testAddGauge(address gauge) public {
+    //     if (gauge == address(0)) gauge = address(this);
+
     //     testAddGaugeFactory(BaseV2GaugeFactory(gauge));
     //     assertTrue(manager.activeGaugeFactories(BaseV2GaugeFactory(gauge)));
-    //     mockBHermesAddGauge();
-    //     hevm.prank(gauge);
+
+    //     expectBHermesAddGauge(gauge);
+
+    //     vm.prank(gauge);
     //     manager.addGauge(gauge);
     // }
 
     function testAddGaugeNotGaugeFactory(address gauge) public {
+        if (gauge == address(this)) gauge = address(1);
+
         testAddGaugeFactory(BaseV2GaugeFactory(gauge));
-        mockBHermesAddGauge();
+
         assertFalse(manager.activeGaugeFactories(BaseV2GaugeFactory(address(this))));
-        hevm.expectRevert(IBaseV2GaugeManager.NotActiveGaugeFactory.selector);
+        vm.expectRevert(IBaseV2GaugeManager.NotActiveGaugeFactory.selector);
         manager.addGauge(gauge);
     }
 
     function testAddGaugeNotExists(address gauge) public {
-        hevm.assume(gauge != address(this));
-        mockBHermesAddGauge();
+        if (gauge == address(this)) gauge = address(1);
+
         assertFalse(manager.activeGaugeFactories(BaseV2GaugeFactory(gauge)));
-        hevm.expectRevert(IBaseV2GaugeManager.NotActiveGaugeFactory.selector);
-        hevm.prank(gauge);
+        vm.expectRevert(IBaseV2GaugeManager.NotActiveGaugeFactory.selector);
+        vm.prank(gauge);
         manager.addGauge(gauge);
     }
 
     function testRemoveGauge(address gauge) public {
-        hevm.assume(gauge != address(this));
+        if (gauge == address(this)) gauge = address(1);
+
         testAddGaugeFactory(BaseV2GaugeFactory(gauge));
         assertTrue(manager.activeGaugeFactories(BaseV2GaugeFactory(gauge)));
-        mockBHermesRemoveGauge();
-        hevm.prank(gauge);
+        expectBHermesRemoveGauge(gauge);
+        vm.prank(gauge);
         manager.removeGauge(gauge);
     }
 
     function testRemoveGaugeNotGaugeFactory(address gauge) public {
         testAddGaugeFactory(BaseV2GaugeFactory(gauge));
-        mockBHermesAddGauge();
+
         assertFalse(manager.activeGaugeFactories(BaseV2GaugeFactory(address(this))));
-        hevm.expectRevert(IBaseV2GaugeManager.NotActiveGaugeFactory.selector);
+        vm.expectRevert(IBaseV2GaugeManager.NotActiveGaugeFactory.selector);
         manager.removeGauge(gauge);
     }
 
     function testRemoveGaugeNotExists(address gauge) public {
-        hevm.assume(gauge != address(this));
-        mockBHermesAddGauge();
+        if (gauge == address(this)) gauge = address(1);
+
         assertFalse(manager.activeGaugeFactories(BaseV2GaugeFactory(gauge)));
-        hevm.expectRevert(IBaseV2GaugeManager.NotActiveGaugeFactory.selector);
-        hevm.prank(gauge);
+        vm.expectRevert(IBaseV2GaugeManager.NotActiveGaugeFactory.selector);
+        vm.prank(gauge);
         manager.removeGauge(gauge);
     }
 
     function testGetGaugeFactories(BaseV2GaugeFactory gaugeFactory, BaseV2GaugeFactory gaugeFactory2) public {
-        hevm.assume(address(gaugeFactory) != address(gaugeFactory2));
+        if (address(gaugeFactory) == address(gaugeFactory2)) {
+            if (address(gaugeFactory) == address(0)) gaugeFactory2 = BaseV2GaugeFactory(address(1));
+            else gaugeFactory2 = BaseV2GaugeFactory(address(uint160(address(gaugeFactory)) - 1));
+        }
 
         assertEq(manager.getGaugeFactories().length, 0);
 
@@ -220,19 +244,19 @@ contract BaseV2GaugeManagerTest is DSTestPlus {
     function testAddGaugeFactoryAlreadyExists(BaseV2GaugeFactory gaugeFactory) public {
         testAddGaugeFactory(gaugeFactory);
 
-        hevm.expectRevert(IBaseV2GaugeManager.GaugeFactoryAlreadyExists.selector);
+        vm.expectRevert(IBaseV2GaugeManager.GaugeFactoryAlreadyExists.selector);
         manager.addGaugeFactory(gaugeFactory);
     }
 
     function testAddGaugeFactoryEvent(BaseV2GaugeFactory gaugeFactory) public {
-        hevm.expectEmit(true, true, true, true);
+        vm.expectEmit(true, true, true, true);
         emit AddedGaugeFactory(address(gaugeFactory));
         manager.addGaugeFactory(gaugeFactory);
     }
 
     function testAddGaugeFactoryNotOwner(address gaugeFactory) public {
-        hevm.prank(address(0xCAF1));
-        hevm.expectRevert(Unauthorized.selector);
+        vm.prank(address(0xCAF1));
+        vm.expectRevert(Unauthorized.selector);
         manager.addGaugeFactory(BaseV2GaugeFactory(gaugeFactory));
     }
 
@@ -253,55 +277,83 @@ contract BaseV2GaugeManagerTest is DSTestPlus {
 
     function testRemoveGaugeFactoryEvent(BaseV2GaugeFactory gaugeFactory) public {
         testAddGaugeFactory(gaugeFactory);
-        hevm.expectEmit(true, true, true, true);
+        vm.expectEmit(true, true, true, true);
         emit RemovedGaugeFactory(address(gaugeFactory));
         manager.removeGaugeFactory(gaugeFactory);
     }
 
     function testRemoveGaugeFactoryNotOwner(address gaugeFactory) public {
-        hevm.prank(address(0xCAF1));
-        hevm.expectRevert(Unauthorized.selector);
+        vm.prank(address(0xCAF1));
+        vm.expectRevert(Unauthorized.selector);
         manager.removeGaugeFactory(BaseV2GaugeFactory(gaugeFactory));
     }
 
+    function testRemoveGaugeFactoryNotActive(BaseV2GaugeFactory gaugeFactory) public {
+        if (address(gaugeFactory) == address(0)) gaugeFactory = BaseV2GaugeFactory(address(1));
+
+        vm.expectRevert(IBaseV2GaugeManager.NotActiveGaugeFactory.selector);
+        manager.removeGaugeFactory(gaugeFactory);
+    }
+
+    function testRemoveGaugeFactoryNotInArray(BaseV2GaugeFactory gaugeFactory) public {
+        if (address(gaugeFactory) == address(0)) gaugeFactory = BaseV2GaugeFactory(address(1));
+
+        testAddGaugeFactory(gaugeFactory);
+        manager.changeActiveGaugeFactory(gaugeFactory, false);
+
+        vm.expectRevert(IBaseV2GaugeManager.NotActiveGaugeFactory.selector);
+        manager.removeGaugeFactory(gaugeFactory);
+    }
+
     function testChangebHermesGaugeOwner(address newOwner) public {
-        mockBHermesChangeOwner();
-        hevm.prank(_admin);
+        expectBHermesChangeOwner(newOwner);
+        vm.prank(_admin);
         manager.changebHermesGaugeOwner(newOwner);
     }
 
     function testChangebHermesGaugeOwnerEvent(address newOwner) public {
-        mockBHermesChangeOwner();
+        expectBHermesChangeOwner(newOwner);
 
-        hevm.prank(_admin);
-        hevm.expectEmit(true, true, true, true);
+        vm.prank(_admin);
+        vm.expectEmit(true, true, true, true);
         emit ChangedbHermesGaugeOwner(newOwner);
         manager.changebHermesGaugeOwner(newOwner);
     }
 
     function testChangebHermesGaugeOwnerNotAdmin(address newOwner) public {
-        hevm.expectRevert(NotAdmin.selector);
+        vm.expectRevert(NotAdmin.selector);
         manager.changebHermesGaugeOwner(newOwner);
     }
 
     function testChangeAdmin(address newAdmin) public {
         assertEq(manager.admin(), address(_admin));
-        hevm.prank(_admin);
+        vm.prank(_admin);
         manager.changeAdmin(newAdmin);
         assertEq(manager.admin(), newAdmin);
     }
 
     function testChangeAdminNotAdmin(address newAdmin) public {
         assertEq(manager.admin(), address(_admin));
-        hevm.expectRevert(NotAdmin.selector);
+        vm.expectRevert(NotAdmin.selector);
         manager.changeAdmin(newAdmin);
     }
 
     function testChangeAdminEvent(address newAdmin) public {
-        hevm.prank(_admin);
-        hevm.expectEmit(true, true, true, true);
+        vm.prank(_admin);
+        vm.expectEmit(true, true, true, true);
         emit ChangedAdmin(newAdmin);
         manager.changeAdmin(newAdmin);
+    }
+
+    function testChangeFlywheelBooster(address newFlywheelBooster) public {
+        vm.prank(_admin);
+        vm.expectCall(gaugeWeight, abi.encodeWithSignature("setFlywheelBooster(address)", newFlywheelBooster));
+        manager.changeFlywheelBooster(newFlywheelBooster);
+    }
+
+    function testChangeFlywheelBoosterNotAdmin(address newFlywheelBooster) public {
+        vm.expectRevert(NotAdmin.selector);
+        manager.changeFlywheelBooster(newFlywheelBooster);
     }
 
     /// @notice Emitted when a new gauge factory is added.

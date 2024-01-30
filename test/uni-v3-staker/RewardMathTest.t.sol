@@ -99,6 +99,36 @@ contract RewardMathTest is DSTestPlus {
         assertEq(secondsInsideX128, 205802775513783582702648000000000000000000000);
     }
 
+    function testComputeRewardAmountMoreThanMaxBoost() public {
+        uint256 totalRewardUnclaimed = 1000 ether;
+        uint160 totalSecondsClaimedX128 = 0;
+        uint160 startTime = 1625000000;
+        uint160 endTime = 1625000000 + 7 days;
+        uint160 stakedDuration = 3.5 days;
+        uint128 liquidity = 1000 ether;
+        uint128 boostAmount = 1000 ether;
+        uint128 boostTotalSupply = 1000 ether;
+        uint160 secondsPerLiquidityInsideInitialX128 = 0;
+        uint160 inputSecondsInsideX128 = stakedDuration << 128;
+        uint256 currentTime = endTime;
+
+        uint160 secondsInsideX128 = RewardMath.computeBoostedSecondsInsideX128(
+            stakedDuration,
+            liquidity,
+            boostAmount,
+            boostTotalSupply,
+            secondsPerLiquidityInsideInitialX128,
+            inputSecondsInsideX128 / liquidity
+        );
+
+        uint256 reward = RewardMath.computeBoostedRewardAmount(
+            totalRewardUnclaimed, totalSecondsClaimedX128, startTime, endTime, secondsInsideX128, currentTime
+        );
+
+        assertEq(reward, 499999999999999999999);
+        assertEq(secondsInsideX128, 102901387756891791351324000000000000000000000);
+    }
+
     function testComputeRewardAmountHalfBoost() public {
         uint256 totalRewardUnclaimed = 1000 ether;
         uint160 totalSecondsClaimedX128 = 0;

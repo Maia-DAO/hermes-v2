@@ -41,6 +41,14 @@ contract FlywheelStrategyTest is DSTestPlus {
         flywheel.addStrategyForRewards(strat);
         uint256 index = flywheel.strategyIndex(strat);
         require(index == ONE);
+
+        require(flywheel.allStrategies(0) == strat);
+        require(flywheel.strategyIds(strat) == 0);
+
+        ERC20[] memory allStrategies = flywheel.getAllStrategies();
+
+        require(allStrategies.length == 1);
+        require(allStrategies[0] == strat);
     }
 
     function testFailAddStrategy() public {
@@ -100,6 +108,33 @@ contract FlywheelStrategyTest is DSTestPlus {
         flywheel.addStrategyForRewards(strategy);
 
         uint256 accrued = flywheel.accrue(strategy, user);
+
+        uint256 index = flywheel.strategyIndex(strategy);
+
+        uint256 diff = (rewardAmount * ONE) / (uint256(userBalance1) + userBalance2);
+
+        require(index == ONE + diff);
+        require(flywheel.userIndex(strategy, user) == index);
+        require(flywheel.rewardsAccrued(user) == (diff * userBalance1) / ONE);
+        require(accrued == (diff * userBalance1) / ONE);
+        require(flywheel.rewardsAccrued(user2) == 0 ether);
+
+        require(rewardToken.balanceOf(address(rewards)) == rewardAmount);
+    }
+
+    function testAccrueFromStrategy(uint128 userBalance1, uint128 userBalance2, uint128 rewardAmount) public {
+        (userBalance1, userBalance2, rewardAmount) = parseAmounts(userBalance1, userBalance2, rewardAmount);
+
+        strategy.mint(user, userBalance1);
+        strategy.mint(user2, userBalance2);
+
+        rewardToken.mint(address(rewards), rewardAmount);
+        rewards.setRewardsAmount(strategy, rewardAmount);
+
+        flywheel.addStrategyForRewards(strategy);
+
+        hevm.prank(address(strategy));
+        uint256 accrued = flywheel.accrue(user);
 
         uint256 index = flywheel.strategyIndex(strategy);
 

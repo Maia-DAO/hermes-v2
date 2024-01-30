@@ -213,4 +213,31 @@ contract UniswapV3GaugeFactoryTest is DSTestPlus {
         factory.removeGauge(gauge2);
         assertEq(factory.getGauges().length, 2);
     }
+
+    function testSetMinimumWidth(address strategy, uint24 minimumWidth) public {
+        UniswapV3Gauge gauge = UniswapV3Gauge(testCreateGauge(strategy));
+        assertEq(factory.getGauges().length, 1);
+
+        assertEq(gauge.minimumWidth(), 0);
+
+        factory.setMinimumWidth(address(gauge), minimumWidth);
+        assertEq(gauge.minimumWidth(), minimumWidth);
+    }
+
+    function testSetMinimumWidthNotOwner(address strategy, uint24 minimumWidth) public {
+        UniswapV3Gauge gauge = UniswapV3Gauge(testCreateGauge(strategy));
+        assertEq(factory.getGauges().length, 1);
+
+        hevm.prank(address(0xCAF1));
+        hevm.expectRevert(Unauthorized.selector);
+        factory.setMinimumWidth(address(gauge), minimumWidth);
+    }
+
+    function testSetMinimumWidthInvalidGauge(address strategy, uint24 minimumWidth) public {
+        UniswapV3Gauge(testCreateGauge(strategy));
+        assertEq(factory.getGauges().length, 1);
+
+        hevm.expectRevert(IBaseV2GaugeFactory.InvalidGauge.selector);
+        factory.setMinimumWidth(address(0), minimumWidth);
+    }
 }

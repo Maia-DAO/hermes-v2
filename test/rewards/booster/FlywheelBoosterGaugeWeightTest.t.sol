@@ -158,6 +158,10 @@ contract InvariantFlywheelBoosterGaugeWeight is Test {
         gaugeToken.incrementGauge(gauge, amount);
     }
 
+    function dencrementWeight(address gauge, uint112 amount) private {
+        gaugeToken.decrementGauge(gauge, amount);
+    }
+
     /*///////////////////////////////////////////////////////////////
                                INVARIANTS
     ///////////////////////////////////////////////////////////////*/
@@ -293,6 +297,40 @@ contract InvariantFlywheelBoosterGaugeWeight is Test {
         vm.stopPrank();
         assertEq(gaugeToken.getGaugeWeight(address(gauge)), amount);
         assertEq(gaugeToken.getUserGaugeWeight(address(this), address(gauge)), amount);
+    }
+
+    function test_OptIn_Increment_Decrement(uint112 amount) public {
+        if (amount == 0) amount = 1;
+
+        ERC20 gauge = ERC20(boosterHandler.gauges()[0]);
+        FlywheelCore flywheel = FlywheelCore(boosterHandler.flywheels()[0]);
+
+        mintAndIncrementWeight(address(gauge), amount);
+
+        vm.startPrank(address(flywheel));
+        assertEq(booster.boostedTotalSupply(gauge), 0);
+        assertEq(booster.boostedBalanceOf(gauge, address(this)), 0);
+        vm.stopPrank();
+        assertEq(gaugeToken.getGaugeWeight(address(gauge)), amount);
+        assertEq(gaugeToken.getUserGaugeWeight(address(this), address(gauge)), amount);
+
+        test_OptIn();
+
+        vm.startPrank(address(flywheel));
+        assertEq(booster.boostedTotalSupply(gauge), amount);
+        assertEq(booster.boostedBalanceOf(gauge, address(this)), amount);
+        vm.stopPrank();
+        assertEq(gaugeToken.getGaugeWeight(address(gauge)), amount);
+        assertEq(gaugeToken.getUserGaugeWeight(address(this), address(gauge)), amount);
+
+        dencrementWeight(address(gauge), amount);
+
+        vm.startPrank(address(flywheel));
+        assertEq(booster.boostedTotalSupply(gauge), 0);
+        assertEq(booster.boostedBalanceOf(gauge, address(this)), 0);
+        vm.stopPrank();
+        assertEq(gaugeToken.getGaugeWeight(address(gauge)), 0);
+        assertEq(gaugeToken.getUserGaugeWeight(address(this), address(gauge)), 0);
     }
 
     function test_OptIn_Claim(uint256 amount) public {

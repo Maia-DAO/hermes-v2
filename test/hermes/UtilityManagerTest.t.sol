@@ -105,6 +105,17 @@ contract UtilityManagerTest is DSTestPlus {
         assertAmounts(0, 0, 0);
     }
 
+    function testForfeitOutstanding(uint256 weight, uint256 boost, uint256 governance) public {
+        testClaimMultipleAmounts(weight, boost, governance);
+
+        utilityManager.gaugeWeight().approve(address(utilityManager), weight);
+        utilityManager.gaugeBoost().approve(address(utilityManager), boost);
+        utilityManager.governance().approve(address(utilityManager), governance);
+
+        utilityManager.forfeitOutstanding();
+        assertAmounts(0, 0, 0);
+    }
+
     function testForfeitWeight(uint256 amount) public {
         testClaimWeight(amount);
 

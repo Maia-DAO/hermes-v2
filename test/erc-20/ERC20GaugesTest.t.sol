@@ -565,6 +565,7 @@ contract ERC20GaugesTest is DSTestPlus {
 
         assertEq(token.numUserGauges(address(this)), 1);
         assertEq(token.userGauges(address(this))[0], gauge1);
+        assertEq(token.userGauges(address(this), 0, 1)[0], gauge1);
 
         assertEq(token.decrementGauge(gauge1, 4e18), 0);
 
