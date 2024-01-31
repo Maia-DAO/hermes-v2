@@ -140,6 +140,8 @@ contract ERC4626Test is DSTestPlus {
 
         address alice = address(0xABCD);
 
+        if (spender == alice) spender = address(0x1234);
+
         underlying.mint(alice, aliceUnderlyingAmount);
 
         hevm.prank(alice);
@@ -275,6 +277,8 @@ contract ERC4626Test is DSTestPlus {
         uint256 aliceShareAmount = amount;
 
         address alice = address(0xABCD);
+
+        if (spender == alice) spender = address(0x1234);
 
         underlying.mint(alice, aliceShareAmount);
 
