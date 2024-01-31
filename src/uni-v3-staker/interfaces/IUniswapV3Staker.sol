@@ -240,6 +240,10 @@ interface IUniswapV3Staker is IERC721Receiver {
     /// @param tokenId The ID of the token to stake
     function stakeToken(uint256 tokenId) external;
 
+    /// @notice Unstakes a Uniswap V3 LP token from deprecated incentives and stakes it in the active incentive
+    /// @param tokenId The ID of the token to stake
+    function restakeToken(uint256 tokenId) external;
+
     /*//////////////////////////////////////////////////////////////
                         GAUGE UPDATE LOGIC
     ///////////////////////////////////////////////////////////////*/

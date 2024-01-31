@@ -348,6 +348,7 @@ contract UniswapV3Staker is IUniswapV3Staker, Multicallable {
                             RE-STAKE TOKEN LOGIC
     ///////////////////////////////////////////////////////////////*/
 
+    /// @inheritdoc IUniswapV3Staker
     function restakeToken(uint256 tokenId) external {
         IncentiveKey storage incentiveId = stakedIncentiveKey[tokenId];
         if (incentiveId.startTime != 0) _unstakeToken(incentiveId, tokenId, false);
