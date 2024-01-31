@@ -27,7 +27,7 @@ Remember to replace 'Maia-DAO/foundry-template' with your repository's path and 
 <!-- [![Discussions][discussions-badge]][discussions-link] -->
 <!-- [![JS Library][js-library-badge]][js-library-link] -->
 
-In this repo you will find the contracts for the Hermes V2 reward system.
+In this repository, you will find the contracts for the Hermes V2 reward system.
 
 ## Contributing
 

@@ -4,17 +4,15 @@ forge-std/=lib/forge-std/src/
 hardhat/=node_modules/hardhat/
 solmate/=lib/solmate/src/
 solady/=lib/solady/src/
-@lib/=src/lib/
+@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 
 @uniswap/v3-core/contracts/=lib/v3-core/contracts/
 @uniswap/v3-periphery/contracts/=lib/v3-periphery/contracts/
-@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/
 
 @ERC20/=src/erc-20/
 @ERC4626/=src/erc-4626/
 @gauges/=src/gauges/
 @hermes/=src/hermes/
-@maia/=src/maia/
 @rewards/=src/rewards/
 @v3-staker/=src/uni-v3-staker/
 

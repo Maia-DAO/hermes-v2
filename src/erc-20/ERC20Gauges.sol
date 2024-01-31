@@ -7,7 +7,7 @@ import {SafeCastLib} from "solady/utils/SafeCastLib.sol";
 import {ReentrancyGuard} from "solmate/utils/ReentrancyGuard.sol";
 import {ERC20} from "solmate/tokens/ERC20.sol";
 
-import {EnumerableSet} from "@lib/EnumerableSet.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {IFlywheelBooster} from "@rewards/interfaces/IFlywheelBooster.sol";
 

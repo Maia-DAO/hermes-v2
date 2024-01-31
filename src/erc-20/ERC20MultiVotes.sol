@@ -9,7 +9,7 @@ import {FixedPointMathLib} from "solady/utils/FixedPointMathLib.sol";
 
 import {ERC20} from "solmate/tokens/ERC20.sol";
 
-import {EnumerableSet} from "@lib/EnumerableSet.sol";
+import {EnumerableSet} from "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
 
 import {IBaseV2Gauge} from "@gauges/interfaces/IBaseV2Gauge.sol";
 
