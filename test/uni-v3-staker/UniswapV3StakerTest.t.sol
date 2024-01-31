@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import {console2} from "forge-std/console2.sol";
-import {TestBase} from "forge-std/Base.sol";
+import {Test} from "forge-std/Test.sol";
 
 import {DSTestPlus} from "solmate/test/utils/DSTestPlus.sol";
 import {FixedPointMathLib} from "solmate/utils/FixedPointMathLib.sol";
@@ -33,9 +33,15 @@ import {UniswapV3Assistant} from "@test/utils/UniswapV3Assistant.t.sol";
 
 import {PoolVariables} from "@test/utils/libraries/PoolVariables.sol";
 
-import {IUniswapV3Pool, UniswapV3Staker, IUniswapV3Staker, IncentiveTime} from "@v3-staker/UniswapV3Staker.sol";
+import {
+    IUniswapV3Pool,
+    UniswapV3Staker,
+    IUniswapV3Staker,
+    IncentiveTime,
+    NFTPositionInfo
+} from "@v3-staker/UniswapV3Staker.sol";
 
-contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
+contract UniswapV3StakerTest is Test, IERC721Receiver {
     using FixedPointMathLib for uint256;
     using FixedPointMathLib for uint160;
     using FixedPointMathLib for uint128;
@@ -118,7 +124,7 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
             address(this)
         );
 
-        hevm.mockCall(address(0), abi.encodeWithSignature("addGauge(address)"), abi.encode(""));
+        vm.mockCall(address(0), abi.encodeWithSignature("addGauge(address)"), abi.encode(""));
 
         uniswapV3StakerContract = uniswapV3GaugeFactory.uniswapV3Staker();
 
@@ -140,13 +146,18 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
         uniswapV3Staker.createIncentive(_key, amount);
     }
 
+    // Create a Uniswap V3 Staker incentive with the gauge as msg.sender
+    function createIncentiveFromGauge(uint256 amount) internal {
+        uniswapV3Staker.createIncentiveFromGauge(amount);
+    }
+
     // Implementing `onERC721Received` so this contract can receive custody of erc721 tokens
     function onERC721Received(address, address, uint256, bytes calldata) external pure override returns (bytes4) {
         return this.onERC721Received.selector;
     }
 
-    function newNFT(int24 tickLower, int24 tickUpper, uint128 sqrtPriceX96) internal returns (uint256 tokenId) {
-        (uint256 amount0, uint256 amount1) = PoolVariables.amountsForLiquidity(pool, sqrtPriceX96, tickLower, tickUpper);
+    function newNFT(int24 tickLower, int24 tickUpper, uint128 liquidity) internal returns (uint256 tokenId) {
+        (uint256 amount0, uint256 amount1) = PoolVariables.amountsForLiquidity(pool, liquidity, tickLower, tickUpper);
 
         token0.mint(address(this), amount0);
         token1.mint(address(this), amount1);
@@ -165,7 +176,7 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
             amount0,
             amount1
         );
-        hevm.warp(block.timestamp + 100);
+        vm.warp(block.timestamp + 100);
     }
 
     //////////////////////////////////////////////////////////////////
@@ -173,31 +184,31 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
     //////////////////////////////////////////////////////////////////
 
     // Test minting a position and transferring it to Uniswap V3 Staker, before creating a gauge
-    function testFailNoGauge() public {
+    function testNoGauge() public {
         // Create a Uniswap V3 pool
         (pool, poolContract) =
             UniswapV3Assistant.createPool(uniswapV3Factory, address(token0), address(token1), poolFee);
 
         // Initialize 1:1 0.3% fee pool
         UniswapV3Assistant.initializeBalanced(poolContract);
-        hevm.warp(block.timestamp + 100);
+        vm.warp(block.timestamp + 100);
 
         // 3338502497096994491500 to give 1 ether per token with 0.3% fee and -60,60 ticks
         uint256 tokenId = newNFT(-60, 60, 3338502497096994491500);
 
         // Transfer and stake the position in Uniswap V3 Staker
-        hevm.expectRevert(bytes("NonExistentIncentiveError()"));
+        vm.expectRevert(IUniswapV3Staker.NonExistentIncentiveError.selector);
         nonfungiblePositionManager.safeTransferFrom(address(this), address(uniswapV3Staker), tokenId);
     }
 
-    function testFailGaugeNoIncentive() public {
+    function testGaugeNoIncentive() public {
         // Create a Uniswap V3 pool
         (pool, poolContract) =
             UniswapV3Assistant.createPool(uniswapV3Factory, address(token0), address(token1), poolFee);
 
         // Initialize 1:1 0.3% fee pool
         UniswapV3Assistant.initializeBalanced(poolContract);
-        hevm.warp(block.timestamp + 100);
+        vm.warp(block.timestamp + 100);
 
         // 3338502497096994491500 to give 1 ether per token with 0.3% fee and -60,60 ticks
         uint256 tokenId = newNFT(-60, 60, 3338502497096994491500);
@@ -207,39 +218,39 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
         gauge = createGaugeAndAddToGaugeBoost(pool, minWidth);
 
         // Transfer and stake the position in Uniswap V3 Staker
-        hevm.expectRevert(bytes("NonExistentIncentiveError()"));
+        vm.expectRevert(IUniswapV3Staker.NonExistentIncentiveError.selector);
         nonfungiblePositionManager.safeTransferFrom(address(this), address(uniswapV3Staker), tokenId);
     }
 
     // Test minting a position and transferring it to Uniswap V3 Staker, after creating a gauge
-    function testFailRangeTooSmall() public {
+    function testRangeTooSmall() public {
         // Create a Uniswap V3 pool
         (pool, poolContract) =
             UniswapV3Assistant.createPool(uniswapV3Factory, address(token0), address(token1), poolFee);
 
         // Initialize 1:1 0.3% fee pool
         UniswapV3Assistant.initializeBalanced(poolContract);
-        hevm.warp(block.timestamp + 100);
+        vm.warp(block.timestamp + 100);
 
         // 3338502497096994491500 to give 1 ether per token with 0.3% fee and -60,60 ticks
         uint256 tokenId = newNFT(-60, 60, 3338502497096994491500);
 
-        uint256 minWidth = 120;
+        uint256 minWidth = 121;
         // Create a gauge
         gauge = createGaugeAndAddToGaugeBoost(pool, minWidth);
 
         // Create a Uniswap V3 Staker incentive
-        key = IUniswapV3Staker.IncentiveKey({pool: pool, startTime: uint96(block.timestamp + 100)});
+        key = IUniswapV3Staker.IncentiveKey({pool: pool, startTime: IncentiveTime.computeEnd(block.timestamp)});
 
         uint256 rewardAmount = 1 ether;
         rewardToken.mint(address(this), rewardAmount);
         rewardToken.approve(address(uniswapV3Staker), rewardAmount);
 
         createIncentive(key, rewardAmount);
-        hevm.warp(key.startTime);
+        vm.warp(key.startTime);
 
         // Transfer and stake the position in Uniswap V3 Staker
-        hevm.expectRevert(abi.encodeWithSignature("RangeTooSmallError()"));
+        vm.expectRevert(abi.encodeWithSignature("RangeTooSmallError()"));
         nonfungiblePositionManager.safeTransferFrom(address(this), address(uniswapV3Staker), tokenId);
     }
 
@@ -251,7 +262,7 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
 
         // Initialize 1:1 0.3% fee pool
         UniswapV3Assistant.initializeBalanced(poolContract);
-        hevm.warp(block.timestamp + 100);
+        vm.warp(block.timestamp + 100);
 
         // 3338502497096994491500 to give 1 ether per token with 0.3% fee and -60,60 ticks
         uint256 tokenId = newNFT(-60, 60, 3338502497096994491500);
@@ -268,7 +279,7 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
         rewardToken.approve(address(uniswapV3Staker), rewardAmount);
 
         createIncentive(key, rewardAmount);
-        hevm.warp(key.startTime);
+        vm.warp(key.startTime);
 
         // Transfer and stake the position in Uniswap V3 Staker
         nonfungiblePositionManager.safeTransferFrom(address(this), address(uniswapV3Staker), tokenId);
@@ -288,7 +299,7 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
 
         // Initialize 1:1 0.3% fee pool
         UniswapV3Assistant.initializeBalanced(poolContract);
-        hevm.warp(block.timestamp + 100);
+        vm.warp(block.timestamp + 100);
 
         // 3338502497096994491500 to give 1 ether per token with 0.3% fee and -60,60 ticks
         uint256 tokenId = newNFT(-60, 60, 3338502497096994491500);
@@ -305,7 +316,7 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
         rewardToken.approve(address(uniswapV3Staker), rewardAmount);
 
         createIncentive(key, rewardAmount);
-        hevm.warp(key.startTime);
+        vm.warp(key.startTime);
 
         // Transfer and stake the position in Uniswap V3 Staker
         nonfungiblePositionManager.safeTransferFrom(address(this), address(uniswapV3Staker), tokenId);
@@ -316,7 +327,7 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
         assertEq(owner, address(this));
         assertEq(stakedTimestamp, block.timestamp);
 
-        hevm.expectRevert(abi.encodeWithSignature("TokenStakedError()"));
+        vm.expectRevert(IUniswapV3Staker.TokenStakedError.selector);
         uniswapV3Staker.stakeToken(tokenId);
     }
 
@@ -328,7 +339,7 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
 
         // Initialize 1:1 0.3% fee pool
         UniswapV3Assistant.initializeBalanced(poolContract);
-        hevm.warp(block.timestamp + 100);
+        vm.warp(block.timestamp + 100);
 
         // 3338502497096994491500 to give 1 ether per token with 0.3% fee and -60,60 ticks
         uint256 tokenId = newNFT(-60, 60, 3338502497096994491500);
@@ -345,7 +356,7 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
         rewardToken.approve(address(uniswapV3Staker), rewardAmount);
 
         createIncentive(key, rewardAmount);
-        hevm.warp(key.startTime);
+        vm.warp(key.startTime);
 
         // Transfer and stake the position in Uniswap V3 Staker
         nonfungiblePositionManager.safeTransferFrom(address(this), address(uniswapV3Staker), tokenId);
@@ -356,7 +367,7 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
         assertEq(owner, address(this));
         assertEq(stakedTimestamp, block.timestamp);
 
-        hevm.warp(block.timestamp + 1 weeks);
+        vm.warp(block.timestamp + 1 weeks);
 
         (uint256 reward,) = uniswapV3Staker.getRewardInfo(key, tokenId);
         assertEq(reward, ((1 ether * 4) / 10));
@@ -383,7 +394,7 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
 
         // Initialize 1:1 0.3% fee pool
         UniswapV3Assistant.initializeBalanced(poolContract);
-        hevm.warp(block.timestamp + 100);
+        vm.warp(block.timestamp + 100);
 
         // 3338502497096994491500 to give 1 ether per token with 0.3% fee and -60,60 ticks
         uint256 tokenId = newNFT(-60, 60, 3338502497096994491500);
@@ -405,7 +416,7 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
         rewardToken.approve(address(bHermesToken), 1 ether);
         bHermesToken.deposit(1 ether, address(this));
         bHermesToken.claimBoost(1 ether);
-        hevm.warp(key.startTime);
+        vm.warp(key.startTime);
 
         // Transfer and stake the position in Uniswap V3 Staker
         nonfungiblePositionManager.safeTransferFrom(address(this), address(uniswapV3Staker), tokenId);
@@ -416,7 +427,7 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
         assertEq(owner, address(this));
         assertEq(stakedTimestamp, block.timestamp);
 
-        hevm.warp(block.timestamp + 1 weeks);
+        vm.warp(block.timestamp + 1 weeks);
 
         (uint256 reward,) = uniswapV3Staker.getRewardInfo(key, tokenId);
         assertEq(reward, 1 ether);
@@ -430,7 +441,7 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
         assertEq(rewardToken.balanceOf(address(this)), 1 ether);
         assertEq(rewardToken.balanceOf(address(baseV2Minter)), 0);
 
-        hevm.expectRevert(abi.encodeWithSignature("EndIncentiveNoRefundAvailable()"));
+        vm.expectRevert(abi.encodeWithSignature("EndIncentiveNoRefundAvailable()"));
         uniswapV3Staker.endIncentive(key);
     }
 
@@ -442,7 +453,7 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
 
         // Initialize 1:1 0.3% fee pool
         UniswapV3Assistant.initializeBalanced(poolContract);
-        hevm.warp(block.timestamp + 100);
+        vm.warp(block.timestamp + 100);
 
         // 3338502497096994491500 to give 1 ether per token with 0.3% fee and -60,60 ticks
         uint256 tokenId = newNFT(-60, 60, 3338502497096994491500);
@@ -464,7 +475,7 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
         rewardToken.approve(address(bHermesToken), 1 ether);
         bHermesToken.deposit(1 ether, address(this));
         bHermesToken.claimBoost(1 ether);
-        hevm.warp(key.startTime + 1 weeks / 2);
+        vm.warp(key.startTime + 1 weeks / 2);
 
         // Transfer and stake the position in Uniswap V3 Staker
         nonfungiblePositionManager.safeTransferFrom(address(this), address(uniswapV3Staker), tokenId);
@@ -475,7 +486,7 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
         assertEq(owner, address(this));
         assertEq(stakedTimestamp, block.timestamp);
 
-        hevm.warp(block.timestamp + 1 weeks / 2);
+        vm.warp(block.timestamp + 1 weeks / 2);
 
         (uint256 reward,) = uniswapV3Staker.getRewardInfo(key, tokenId);
         assertEq(reward, 1 ether / 2);
@@ -521,13 +532,13 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
 
         // Initialize 1:1 0.3% fee pool
         UniswapV3Assistant.initializeBalanced(poolContract);
-        hevm.warp(block.timestamp + 100);
+        vm.warp(block.timestamp + 100);
 
         // 3338502497096994491500 to give 1 ether per token with 0.3% fee and -60,60 ticks
         newNFT(-180, 180, 3338502497096994491500);
         newNFT(-60, 60, 3338502497096994491500);
 
-        hevm.warp(block.timestamp + 100);
+        vm.warp(block.timestamp + 100);
 
         // @audit Step 1: Swap to make currentTick go to (60, 180) range
         uint256 amountSpecified = 30 ether;
@@ -542,7 +553,7 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
         (, int24 _currentTick,,,,,) = pool.slot0();
         console2.logInt(int256(_currentTick));
 
-        hevm.warp(block.timestamp + 100);
+        vm.warp(block.timestamp + 100);
 
         // @audit Step 2: Swap back to make currentTick go back to (-60, 60) range
         zeroForOne = true;
@@ -557,7 +568,7 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
         (, _currentTick,,,,,) = pool.slot0();
         console2.logInt(int256(_currentTick));
 
-        hevm.warp(block.timestamp + 100);
+        vm.warp(block.timestamp + 100);
 
         // @audit Step 3: Create normal Incentive
         uint256 minWidth = 10;
@@ -575,7 +586,7 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
         // @audit Step 4: Now we have secondsPerLiquidity of tick 60 is not equal to 0.
         //        We just need to create a position with range [-120, 60],
         //        then secondsPerLiquidityInside of this position will be overflow
-        hevm.warp(key.startTime + 1);
+        vm.warp(key.startTime + 1);
         int24 tickLower = -120;
         int24 tickUpper = 60;
         uint256 tokenId = newNFT(tickLower, tickUpper, 3338502497096994491500);
@@ -588,11 +599,560 @@ contract UniswapV3StakerTest is DSTestPlus, TestBase, IERC721Receiver {
 
         // @audit Step 6: Increase time to make `secondsPerLiquidity` go from negative to positive value
         //        Then `unstakeToken` will revert
-        hevm.warp(block.timestamp + 5 weeks);
+        vm.warp(block.timestamp + 5 weeks);
 
         (, secondsPerLiquidityInsideX128,) = pool.snapshotCumulativesInside(tickLower, tickUpper);
         console2.logUint(uint256(secondsPerLiquidityInsideX128));
 
         uniswapV3Staker.unstakeToken(tokenId);
+    }
+
+    // Test creating a gauge and an incentive
+    function testCreateIncentive() public {
+        // Create a Uniswap V3 pool
+        (pool, poolContract) =
+            UniswapV3Assistant.createPool(uniswapV3Factory, address(token0), address(token1), poolFee);
+        uint256 minWidth = 120;
+        // Create a gauge
+        gauge = createGaugeAndAddToGaugeBoost(pool, minWidth);
+
+        // Create a Uniswap V3 Staker incentive
+        key = IUniswapV3Staker.IncentiveKey({pool: pool, startTime: IncentiveTime.computeEnd(block.timestamp)});
+
+        uint256 rewardAmount = 1 ether;
+        rewardToken.mint(address(this), rewardAmount);
+        rewardToken.approve(address(uniswapV3Staker), rewardAmount);
+
+        uint256 balanceBefore = rewardToken.balanceOf(address(uniswapV3Staker));
+
+        createIncentive(key, rewardAmount);
+
+        assertEq(uniswapV3Staker.poolsMinimumWidth(pool), minWidth);
+        assertEq(address(uniswapV3Staker.bribeDepots(pool)), address(gauge.multiRewardsDepot()));
+
+        (uint256 totalRewardUnclaimed, uint160 totalSecondsClaimedX128, uint96 numberOfStakes) =
+            uniswapV3Staker.incentives(keccak256(abi.encode(key)));
+
+        assertEq(totalRewardUnclaimed, rewardAmount);
+        assertEq(totalSecondsClaimedX128, 0);
+        assertEq(numberOfStakes, 0);
+
+        assertEq(rewardToken.balanceOf(address(uniswapV3Staker)), balanceBefore + rewardAmount);
+    }
+
+    // Test creating a gauge and an incentive, then depositing an NFT in the incentive
+    function testCreateIncentiveAndDeposit() public {
+        testCreateIncentive();
+
+        // Initialize 1:1 0.3% fee pool
+        UniswapV3Assistant.initializeBalanced(poolContract);
+        vm.warp(block.timestamp + 100);
+
+        uint256 tokenId = newNFT(-60, 60, 3338502497096994491500);
+
+        (, int24 _tickLower, int24 _tickUpper, uint128 _liquidity) =
+            NFTPositionInfo.getPositionInfo(uniswapV3Factory, nonfungiblePositionManager, tokenId);
+
+        vm.warp(key.startTime);
+
+        (, uint160 secondsPerLiquidityInsideX128,) = pool.snapshotCumulativesInside(_tickLower, _tickUpper);
+
+        // Transfer and stake the position in Uniswap V3 Staker
+        nonfungiblePositionManager.safeTransferFrom(address(this), address(uniswapV3Staker), tokenId);
+
+        (address owner, int24 tickLower, int24 tickUpper, uint40 stakedTimestamp) = uniswapV3Staker.deposits(tokenId);
+
+        assertEq(owner, address(this));
+        assertEq(tickLower, _tickLower);
+        assertEq(tickUpper, _tickUpper);
+        assertEq(stakedTimestamp, block.timestamp);
+
+        assertEq(uniswapV3Staker.userAttachements(address(this), pool), tokenId);
+
+        (,, uint96 numberOfStakes) = uniswapV3Staker.incentives(keccak256(abi.encode(key)));
+
+        assertEq(numberOfStakes, 1);
+
+        (uint160 secondsPerLiquidityInsideInitialX128, uint128 liquidity) =
+            uniswapV3Staker.stakes(tokenId, keccak256(abi.encode(key)));
+
+        assertEq(secondsPerLiquidityInsideInitialX128, secondsPerLiquidityInsideX128);
+        assertEq(liquidity, _liquidity);
+    }
+
+    // Test creating a gauge and an incentive, then depositing an NFT in the incentive with liquidity > type(uint96).max
+    function testCreateIncentiveAndDepositHighLiquidity() public {
+        testCreateIncentive();
+
+        // Initialize 1:1 0.3% fee pool
+        UniswapV3Assistant.initializeBalanced(poolContract);
+        vm.warp(block.timestamp + 100);
+
+        uint256 tokenId = newNFT(-60, 60, type(uint112).max);
+
+        (, int24 _tickLower, int24 _tickUpper, uint128 _liquidity) =
+            NFTPositionInfo.getPositionInfo(uniswapV3Factory, nonfungiblePositionManager, tokenId);
+
+        vm.warp(key.startTime);
+
+        (, uint160 secondsPerLiquidityInsideX128,) = pool.snapshotCumulativesInside(_tickLower, _tickUpper);
+
+        // Transfer and stake the position in Uniswap V3 Staker
+        nonfungiblePositionManager.safeTransferFrom(address(this), address(uniswapV3Staker), tokenId);
+
+        (address owner, int24 tickLower, int24 tickUpper, uint40 stakedTimestamp) = uniswapV3Staker.deposits(tokenId);
+
+        assertEq(owner, address(this));
+        assertEq(tickLower, _tickLower);
+        assertEq(tickUpper, _tickUpper);
+        assertEq(stakedTimestamp, block.timestamp);
+
+        assertEq(uniswapV3Staker.userAttachements(address(this), pool), tokenId);
+
+        (,, uint96 numberOfStakes) = uniswapV3Staker.incentives(keccak256(abi.encode(key)));
+
+        assertEq(numberOfStakes, 1);
+
+        (uint160 secondsPerLiquidityInsideInitialX128, uint128 liquidity) =
+            uniswapV3Staker.stakes(tokenId, keccak256(abi.encode(key)));
+
+        assertEq(secondsPerLiquidityInsideInitialX128, secondsPerLiquidityInsideX128);
+        assertEq(liquidity, _liquidity);
+    }
+
+    // Test creating a gauge and then throw when creating an incentive with error: IncentiveStartTimeNotAtEndOfAnEpoch
+    function testCreateIncentiveIncentiveStartTimeNotAtEndOfAnEpoch() public {
+        // Create a Uniswap V3 pool
+        (pool, poolContract) =
+            UniswapV3Assistant.createPool(uniswapV3Factory, address(token0), address(token1), poolFee);
+        uint256 minWidth = 120;
+        // Create a gauge
+        gauge = createGaugeAndAddToGaugeBoost(pool, minWidth);
+
+        // Create a Uniswap V3 Staker incentive
+        key = IUniswapV3Staker.IncentiveKey({pool: pool, startTime: IncentiveTime.computeEnd(block.timestamp) + 1});
+
+        uint256 rewardAmount = 1 ether;
+        rewardToken.mint(address(this), rewardAmount);
+        rewardToken.approve(address(uniswapV3Staker), rewardAmount);
+
+        vm.expectRevert(IUniswapV3Staker.IncentiveStartTimeNotAtEndOfAnEpoch.selector);
+        createIncentive(key, rewardAmount);
+    }
+
+    // Test creating a gauge and then throw when creating an incentive with error: IncentiveStartTimeMustBeNowOrInTheFuture
+    function testCreateIncentiveIncentiveStartTimeMustBeNowOrInTheFuture() public {
+        // Create a Uniswap V3 pool
+        (pool, poolContract) =
+            UniswapV3Assistant.createPool(uniswapV3Factory, address(token0), address(token1), poolFee);
+        uint256 minWidth = 120;
+        // Create a gauge
+        gauge = createGaugeAndAddToGaugeBoost(pool, minWidth);
+
+        // Create a Uniswap V3 Staker incentive
+        key = IUniswapV3Staker.IncentiveKey({pool: pool, startTime: IncentiveTime.computeStart(block.timestamp - 1)});
+
+        uint256 rewardAmount = 1 ether;
+        rewardToken.mint(address(this), rewardAmount);
+        rewardToken.approve(address(uniswapV3Staker), rewardAmount);
+
+        vm.expectRevert(IUniswapV3Staker.IncentiveStartTimeMustBeNowOrInTheFuture.selector);
+        createIncentive(key, rewardAmount);
+    }
+
+    // Test creating a gauge and then throw when creating an incentive with error: IncentiveStartTimeTooFarIntoFuture
+    function testCreateIncentiveIncentiveStartTimeTooFarIntoFuture() public {
+        // Create a Uniswap V3 pool
+        (pool, poolContract) =
+            UniswapV3Assistant.createPool(uniswapV3Factory, address(token0), address(token1), poolFee);
+        uint256 minWidth = 120;
+        // Create a gauge
+        gauge = createGaugeAndAddToGaugeBoost(pool, minWidth);
+
+        // Create a Uniswap V3 Staker incentive
+        key =
+            IUniswapV3Staker.IncentiveKey({pool: pool, startTime: IncentiveTime.computeEnd(block.timestamp) + 52 weeks});
+
+        uint256 rewardAmount = 1 ether;
+        rewardToken.mint(address(this), rewardAmount);
+        rewardToken.approve(address(uniswapV3Staker), rewardAmount);
+
+        vm.expectRevert(IUniswapV3Staker.IncentiveStartTimeTooFarIntoFuture.selector);
+        createIncentive(key, rewardAmount);
+    }
+
+    // Test creating a gauge and then throw when creating an incentive with error: IncentiveCannotBeCreatedForPoolWithNoGauge
+    function testCreateIncentiveIncentiveCannotBeCreatedForPoolWithNoGauge() public {
+        // Create a Uniswap V3 pool
+        (pool, poolContract) =
+            UniswapV3Assistant.createPool(uniswapV3Factory, address(token0), address(token1), poolFee);
+
+        // Create a Uniswap V3 Staker incentive
+        key = IUniswapV3Staker.IncentiveKey({pool: pool, startTime: IncentiveTime.computeEnd(block.timestamp)});
+
+        uint256 rewardAmount = 1 ether;
+        rewardToken.mint(address(this), rewardAmount);
+        rewardToken.approve(address(uniswapV3Staker), rewardAmount);
+
+        vm.expectRevert(IUniswapV3Staker.IncentiveCannotBeCreatedForPoolWithNoGauge.selector);
+        createIncentive(key, rewardAmount);
+    }
+
+    // Test creating a gauge and an incentive from the created gauge
+    function testCreateIncentiveFromGauge() public {
+        // Create a Uniswap V3 pool
+        (pool, poolContract) =
+            UniswapV3Assistant.createPool(uniswapV3Factory, address(token0), address(token1), poolFee);
+        uint256 minWidth = 120;
+        // Create a gauge
+        gauge = createGaugeAndAddToGaugeBoost(pool, minWidth);
+
+        // Create a Uniswap V3 Staker incentive
+        key = IUniswapV3Staker.IncentiveKey({pool: pool, startTime: IncentiveTime.computeEnd(block.timestamp)});
+
+        uint256 rewardAmount = 1 ether;
+        rewardToken.mint(address(gauge), rewardAmount);
+
+        vm.startPrank(address(gauge));
+
+        rewardToken.approve(address(uniswapV3Staker), rewardAmount);
+
+        uint256 balanceBefore = rewardToken.balanceOf(address(uniswapV3Staker));
+
+        createIncentiveFromGauge(rewardAmount);
+        vm.stopPrank();
+
+        assertEq(uniswapV3Staker.poolsMinimumWidth(pool), minWidth);
+        assertEq(address(uniswapV3Staker.bribeDepots(pool)), address(gauge.multiRewardsDepot()));
+
+        (uint256 totalRewardUnclaimed, uint160 totalSecondsClaimedX128, uint96 numberOfStakes) =
+            uniswapV3Staker.incentives(keccak256(abi.encode(key)));
+
+        assertEq(totalRewardUnclaimed, rewardAmount);
+        assertEq(totalSecondsClaimedX128, 0);
+        assertEq(numberOfStakes, 0);
+
+        assertEq(rewardToken.balanceOf(address(uniswapV3Staker)), balanceBefore + rewardAmount);
+    }
+
+    // Test creating a gauge and an incentive from the created gauge with error: IncentiveCallerMustBeRegisteredGauge
+    function testCreateIncentiveFromGaugeIncentiveCallerMustBeRegisteredGauge() public {
+        // Create a Uniswap V3 pool
+        (pool, poolContract) =
+            UniswapV3Assistant.createPool(uniswapV3Factory, address(token0), address(token1), poolFee);
+
+        // Create a Uniswap V3 Staker incentive
+        key = IUniswapV3Staker.IncentiveKey({pool: pool, startTime: IncentiveTime.computeEnd(block.timestamp)});
+
+        uint256 rewardAmount = 1 ether;
+        rewardToken.mint(address(gauge), rewardAmount);
+
+        vm.startPrank(address(gauge));
+
+        rewardToken.approve(address(uniswapV3Staker), rewardAmount);
+
+        vm.expectRevert(IUniswapV3Staker.IncentiveCallerMustBeRegisteredGauge.selector);
+        createIncentiveFromGauge(rewardAmount);
+        vm.stopPrank();
+    }
+
+    // Test end an incentive
+    function testEndIncentive() public {
+        testCreateIncentiveFromGauge();
+
+        vm.warp(key.startTime + 1 weeks);
+
+        uint256 balanceStakerBefore = rewardToken.balanceOf(address(uniswapV3Staker));
+        uint256 balanceMinterBefore = rewardToken.balanceOf(address(baseV2Minter));
+
+        (uint256 totalRewardUnclaimedBefore, uint160 totalSecondsClaimedX128Before, uint96 numberOfStakesBefore) =
+            uniswapV3Staker.incentives(keccak256(abi.encode(key)));
+
+        assertEq(numberOfStakesBefore, 0);
+
+        uniswapV3Staker.endIncentive(key);
+
+        (uint256 totalRewardUnclaimed, uint160 totalSecondsClaimedX128, uint96 numberOfStakes) =
+            uniswapV3Staker.incentives(keccak256(abi.encode(key)));
+
+        assertEq(totalRewardUnclaimed, 0);
+        assertEq(totalSecondsClaimedX128, totalSecondsClaimedX128Before);
+        assertEq(numberOfStakes, numberOfStakesBefore);
+
+        assertEq(rewardToken.balanceOf(address(uniswapV3Staker)), balanceStakerBefore - totalRewardUnclaimedBefore);
+        assertEq(rewardToken.balanceOf(address(baseV2Minter)), balanceMinterBefore + totalRewardUnclaimedBefore);
+    }
+
+    // Test end an incentive with error: EndIncentiveBeforeEndTime
+    function testEndIncentiveEndIncentiveBeforeEndTime() public {
+        testCreateIncentiveFromGauge();
+
+        vm.expectRevert(IUniswapV3Staker.EndIncentiveBeforeEndTime.selector);
+        uniswapV3Staker.endIncentive(key);
+    }
+
+    // Test end an incentive with error: EndIncentiveNoRefundAvailable
+    function testEndIncentiveEndIncentiveNoRefundAvailable() public {
+        testCreateIncentiveFromGauge();
+
+        vm.warp(key.startTime + 1 weeks);
+
+        uniswapV3Staker.endIncentive(key);
+
+        vm.expectRevert(IUniswapV3Staker.EndIncentiveNoRefundAvailable.selector);
+        uniswapV3Staker.endIncentive(key);
+    }
+
+    // Test end an incentive with error: EndIncentiveWhileStakesArePresent
+    function testEndIncentiveEndIncentiveWhileStakesArePresent() public {
+        testCreateIncentiveFromGauge();
+
+        // Initialize 1:1 0.3% fee pool
+        UniswapV3Assistant.initializeBalanced(poolContract);
+        vm.warp(block.timestamp + 100);
+
+        uint256 tokenId = newNFT(-60, 60, 3338502497096994491500);
+
+        vm.warp(key.startTime);
+
+        // Transfer and stake the position in Uniswap V3 Staker
+        nonfungiblePositionManager.safeTransferFrom(address(this), address(uniswapV3Staker), tokenId);
+
+        vm.warp(key.startTime + 1 weeks);
+
+        vm.expectRevert(IUniswapV3Staker.EndIncentiveWhileStakesArePresent.selector);
+        uniswapV3Staker.endIncentive(key);
+    }
+
+    // Test unstaking a token from an incentive
+    function testUnstakeTokenHalfIncentive() public returns (uint256 tokenId) {
+        testCreateIncentiveAndDeposit();
+
+        tokenId = uniswapV3Staker.userAttachements(address(this), pool);
+
+        vm.warp(key.startTime + 0.5 weeks);
+
+        uint256 balanceStakerBefore = rewardToken.balanceOf(address(uniswapV3Staker));
+        uint256 balanceMinterBefore = rewardToken.balanceOf(address(baseV2Minter));
+
+        (uint256 totalRewardUnclaimedBefore,, uint96 numberOfStakesBefore) =
+            uniswapV3Staker.incentives(keccak256(abi.encode(key)));
+
+        uniswapV3Staker.unstakeToken(tokenId);
+
+        (uint160 secondsPerLiquidityInsideInitialX128, uint128 liquidity) =
+            uniswapV3Staker.stakes(tokenId, keccak256(abi.encode(key)));
+
+        (uint256 totalRewardUnclaimed,, uint96 numberOfStakes) = uniswapV3Staker.incentives(keccak256(abi.encode(key)));
+
+        assertEq(totalRewardUnclaimed, totalRewardUnclaimedBefore * 8 / 10);
+        assertEq(numberOfStakes, numberOfStakesBefore - 1);
+
+        assertEq(rewardToken.balanceOf(address(uniswapV3Staker)), balanceStakerBefore);
+        assertEq(rewardToken.balanceOf(address(baseV2Minter)), balanceMinterBefore);
+
+        assertEq(secondsPerLiquidityInsideInitialX128, 0);
+        assertEq(liquidity, 0);
+    }
+
+    // Test unstaking a token from an incentive
+    function testUnstakeTokenHalfIncentiveWithKey() public returns (uint256 tokenId) {
+        testCreateIncentiveAndDeposit();
+
+        tokenId = uniswapV3Staker.userAttachements(address(this), pool);
+
+        vm.warp(key.startTime + 0.5 weeks);
+
+        uint256 balanceStakerBefore = rewardToken.balanceOf(address(uniswapV3Staker));
+        uint256 balanceMinterBefore = rewardToken.balanceOf(address(baseV2Minter));
+
+        (uint256 totalRewardUnclaimedBefore,, uint96 numberOfStakesBefore) =
+            uniswapV3Staker.incentives(keccak256(abi.encode(key)));
+
+        uniswapV3Staker.unstakeToken(key, tokenId);
+
+        (uint160 secondsPerLiquidityInsideInitialX128, uint128 liquidity) =
+            uniswapV3Staker.stakes(tokenId, keccak256(abi.encode(key)));
+
+        (uint256 totalRewardUnclaimed,, uint96 numberOfStakes) = uniswapV3Staker.incentives(keccak256(abi.encode(key)));
+
+        assertEq(totalRewardUnclaimed, totalRewardUnclaimedBefore * 8 / 10);
+        assertEq(numberOfStakes, numberOfStakesBefore - 1);
+
+        assertEq(rewardToken.balanceOf(address(uniswapV3Staker)), balanceStakerBefore);
+        assertEq(rewardToken.balanceOf(address(baseV2Minter)), balanceMinterBefore);
+
+        assertEq(secondsPerLiquidityInsideInitialX128, 0);
+        assertEq(liquidity, 0);
+    }
+
+    // Test unstaking a token from an incentive and then staking it again
+    function testUnstakeTokenHalfIncentiveAndStakeAgain() public {
+        uint256 tokenId = testUnstakeTokenHalfIncentive();
+
+        uint256 balanceStakerBefore = rewardToken.balanceOf(address(uniswapV3Staker));
+        uint256 balanceMinterBefore = rewardToken.balanceOf(address(baseV2Minter));
+
+        (uint256 totalRewardUnclaimedBefore,, uint96 numberOfStakesBefore) =
+            uniswapV3Staker.incentives(keccak256(abi.encode(key)));
+
+        (, int24 _tickLower, int24 _tickUpper, uint128 _liquidity) =
+            NFTPositionInfo.getPositionInfo(uniswapV3Factory, nonfungiblePositionManager, tokenId);
+
+        (, uint160 secondsPerLiquidityInsideX128,) = pool.snapshotCumulativesInside(_tickLower, _tickUpper);
+
+        uniswapV3Staker.stakeToken(tokenId);
+
+        (uint160 secondsPerLiquidityInsideInitialX128, uint128 liquidity) =
+            uniswapV3Staker.stakes(tokenId, keccak256(abi.encode(key)));
+
+        (uint256 totalRewardUnclaimed,, uint96 numberOfStakes) = uniswapV3Staker.incentives(keccak256(abi.encode(key)));
+
+        assertEq(totalRewardUnclaimed, totalRewardUnclaimedBefore);
+        assertEq(numberOfStakes, numberOfStakesBefore + 1);
+
+        assertEq(rewardToken.balanceOf(address(uniswapV3Staker)), balanceStakerBefore);
+        assertEq(rewardToken.balanceOf(address(baseV2Minter)), balanceMinterBefore);
+
+        assertEq(secondsPerLiquidityInsideInitialX128, secondsPerLiquidityInsideX128);
+        assertEq(liquidity, _liquidity);
+    }
+
+    // Test restaking a token from an incentive to another incentive
+    function testRestakeToken() public {
+        testCreateIncentiveAndDeposit();
+
+        uint256 tokenId = uniswapV3Staker.userAttachements(address(this), pool);
+
+        vm.warp(key.startTime + 0.5 weeks);
+
+        uint256 balanceStakerBefore = rewardToken.balanceOf(address(uniswapV3Staker));
+        uint256 balanceMinterBefore = rewardToken.balanceOf(address(baseV2Minter));
+
+        // Create a Uniswap V3 Staker incentive
+        IUniswapV3Staker.IncentiveKey memory key2 =
+            IUniswapV3Staker.IncentiveKey({pool: pool, startTime: IncentiveTime.computeEnd(block.timestamp)});
+
+        uint256 rewardAmount = 1 ether;
+        rewardToken.mint(address(this), rewardAmount);
+        rewardToken.approve(address(uniswapV3Staker), rewardAmount);
+
+        createIncentive(key2, rewardAmount);
+
+        vm.warp(key2.startTime);
+
+        (, int24 _tickLower, int24 _tickUpper, uint128 _liquidity) =
+            NFTPositionInfo.getPositionInfo(uniswapV3Factory, nonfungiblePositionManager, tokenId);
+
+        (, uint160 secondsPerLiquidityInsideX128,) = pool.snapshotCumulativesInside(_tickLower, _tickUpper);
+
+        uniswapV3Staker.restakeToken(tokenId);
+
+        (uint160 secondsPerLiquidityInsideInitialX128, uint128 liquidity) =
+            uniswapV3Staker.stakes(tokenId, keccak256(abi.encode(key2)));
+
+        (uint256 totalRewardUnclaimed,, uint96 numberOfStakes) = uniswapV3Staker.incentives(keccak256(abi.encode(key2)));
+
+        assertEq(totalRewardUnclaimed, rewardAmount);
+        assertEq(numberOfStakes, 1);
+
+        assertEq(rewardToken.balanceOf(address(uniswapV3Staker)), balanceStakerBefore + rewardAmount);
+        assertEq(rewardToken.balanceOf(address(baseV2Minter)), balanceMinterBefore);
+
+        assertEq(secondsPerLiquidityInsideInitialX128, secondsPerLiquidityInsideX128);
+        assertEq(liquidity, _liquidity);
+    }
+
+    // Test withdraw a token from the staker
+    function testWithdraw() public {
+        uint256 tokenId = testUnstakeTokenHalfIncentive();
+
+        uniswapV3Staker.withdrawToken(tokenId, address(this), "");
+
+        (address owner, int24 tickLower, int24 tickUpper, uint40 stakedTimestamp) = uniswapV3Staker.deposits(tokenId);
+
+        assertEq(owner, address(0));
+        assertEq(tickLower, 0);
+        assertEq(tickUpper, 0);
+        assertEq(stakedTimestamp, 0);
+    }
+
+    // Test withdraw a token from the staker and revert with error: InvalidRecipient
+    function testWithdrawInvalidRecipient() public {
+        uint256 tokenId = testUnstakeTokenHalfIncentive();
+
+        vm.expectRevert(IUniswapV3Staker.InvalidRecipient.selector);
+        uniswapV3Staker.withdrawToken(tokenId, address(0), "");
+    }
+
+    // Test withdraw a token from the staker and revert with error: NotCalledByOwner
+    function testWithdrawNotCalledByOwner() public {
+        uint256 tokenId = testUnstakeTokenHalfIncentive();
+
+        vm.expectRevert(IUniswapV3Staker.NotCalledByOwner.selector);
+        vm.prank(address(1));
+        uniswapV3Staker.withdrawToken(tokenId, address(this), "");
+    }
+
+    // Test claim rewards
+    function testClaimRewards() public {
+        testUnstakeTokenHalfIncentive();
+
+        uint256 balanceStakerBefore = rewardToken.balanceOf(address(uniswapV3Staker));
+        uint256 balanceThisBefore = rewardToken.balanceOf(address(this));
+
+        uint256 earnedRewards = uniswapV3Staker.rewards(address(this));
+
+        uniswapV3Staker.claimReward(address(this), 0);
+
+        assertEq(rewardToken.balanceOf(address(uniswapV3Staker)), balanceStakerBefore - earnedRewards);
+        assertEq(rewardToken.balanceOf(address(this)), balanceThisBefore + earnedRewards);
+    }
+
+    // Test claim rewards with a specific amount
+    function testClaimRewardsWithAmount() public {
+        testUnstakeTokenHalfIncentive();
+
+        uint256 balanceStakerBefore = rewardToken.balanceOf(address(uniswapV3Staker));
+        uint256 balanceThisBefore = rewardToken.balanceOf(address(this));
+
+        uint256 earnedRewards = uniswapV3Staker.rewards(address(this));
+
+        uniswapV3Staker.claimReward(address(this), earnedRewards / 2);
+
+        assertEq(rewardToken.balanceOf(address(uniswapV3Staker)), balanceStakerBefore - earnedRewards / 2);
+        assertEq(rewardToken.balanceOf(address(this)), balanceThisBefore + earnedRewards / 2);
+    }
+
+    // Test claim rewards twice
+    function testClaimRewardsTwice() public {
+        testClaimRewards();
+
+        uint256 balanceStakerBefore = rewardToken.balanceOf(address(uniswapV3Staker));
+        uint256 balanceThisBefore = rewardToken.balanceOf(address(this));
+
+        uniswapV3Staker.claimReward(address(this), 0);
+
+        assertEq(rewardToken.balanceOf(address(uniswapV3Staker)), balanceStakerBefore);
+        assertEq(rewardToken.balanceOf(address(this)), balanceThisBefore);
+    }
+
+    // Test remove gauge
+    function testRemoveGauge() public {
+        // Create a Uniswap V3 pool
+        (pool, poolContract) =
+            UniswapV3Assistant.createPool(uniswapV3Factory, address(token0), address(token1), poolFee);
+        uint256 minWidth = 120;
+        // Create a gauge
+        gauge = createGaugeAndAddToGaugeBoost(pool, minWidth);
+
+        assertEq(uniswapV3Staker.poolsMinimumWidth(pool), minWidth);
+
+        uniswapV3GaugeFactory.removeGauge(gauge);
+
+        uniswapV3Staker.updateGauges(pool);
+
+        assertEq(uniswapV3Staker.poolsMinimumWidth(pool), type(uint24).max);
+        assertEq(uniswapV3Staker.bribeDepots(pool), address(0));
     }
 }
