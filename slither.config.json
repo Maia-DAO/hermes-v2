@@ -8,6 +8,6 @@
     "hardhat/=node_modules/hardhat/",
     "solmate/=lib/solmate/src/",
     "solady/=lib/solady/src/",
-    "@lib/=lib/"
+    "@lib/=src/lib/"
   ]
 }
