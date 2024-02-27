@@ -20,7 +20,7 @@ contract BaseV2Minter is Ownable, IBaseV2Minter {
                          MINTER STATE
     ///////////////////////////////////////////////////////////////*/
 
-    /// @dev 2% per week target emission
+    /// @dev 0.2% per week target emission
     uint256 internal constant BASE = 1000;
 
     uint256 internal constant MAX_TAIL_EMISSION = 100;
