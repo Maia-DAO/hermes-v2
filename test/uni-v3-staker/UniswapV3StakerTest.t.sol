@@ -369,7 +369,7 @@ contract UniswapV3StakerTest is Test, IERC721Receiver {
 
         vm.warp(block.timestamp + 1 weeks);
 
-        (uint256 reward,) = uniswapV3Staker.getRewardInfo(key, tokenId);
+        (uint256 reward,) = uniswapV3Staker.getRewardInfo(tokenId);
         assertEq(reward, ((1 ether * 4) / 10));
 
         uniswapV3Staker.unstakeToken(tokenId);
@@ -429,7 +429,7 @@ contract UniswapV3StakerTest is Test, IERC721Receiver {
 
         vm.warp(block.timestamp + 1 weeks);
 
-        (uint256 reward,) = uniswapV3Staker.getRewardInfo(key, tokenId);
+        (uint256 reward,) = uniswapV3Staker.getRewardInfo(tokenId);
         assertEq(reward, 1 ether);
 
         uniswapV3Staker.unstakeToken(tokenId);
@@ -488,7 +488,7 @@ contract UniswapV3StakerTest is Test, IERC721Receiver {
 
         vm.warp(block.timestamp + 1 weeks / 2);
 
-        (uint256 reward,) = uniswapV3Staker.getRewardInfo(key, tokenId);
+        (uint256 reward,) = uniswapV3Staker.getRewardInfo(tokenId);
         assertEq(reward, 1 ether / 2);
 
         uniswapV3Staker.unstakeToken(tokenId);

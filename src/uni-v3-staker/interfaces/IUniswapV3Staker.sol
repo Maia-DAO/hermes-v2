@@ -210,14 +210,12 @@ interface IUniswapV3Staker is IERC721Receiver {
     /// @return reward The amount of reward tokens claimed
     function claimAllRewards(address to) external returns (uint256 reward);
 
-    /// @notice Calculates the reward amount that will be received for the given stake
-    /// @param key The key of the incentive
+    /// @notice Calculates the reward amount that will be received for a position's current incentive
+    /// @dev Returns 0 if the position is not staked
     /// @param tokenId The ID of the token
     /// @return reward The reward accrued to the NFT for the given incentive thus far
     /// @return secondsInsideX128 The seconds inside the tick range
-    function getRewardInfo(IncentiveKey memory key, uint256 tokenId)
-        external
-        returns (uint256 reward, uint160 secondsInsideX128);
+    function getRewardInfo(uint256 tokenId) external returns (uint256 reward, uint160 secondsInsideX128);
 
     /*//////////////////////////////////////////////////////////////
                             UNSTAKE TOKEN LOGIC

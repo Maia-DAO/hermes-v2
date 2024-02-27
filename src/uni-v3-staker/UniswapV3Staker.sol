@@ -295,12 +295,16 @@ contract UniswapV3Staker is IUniswapV3Staker, Multicallable {
     }
 
     /// @inheritdoc IUniswapV3Staker
-    function getRewardInfo(IncentiveKey memory key, uint256 tokenId)
+    function getRewardInfo(uint256 tokenId)
         external
         view
         override
         returns (uint256 reward, uint160 secondsInsideX128)
     {
+        IncentiveKey storage key = stakedIncentiveKey[tokenId];
+
+        if (key.startTime == 0) return (0, 0);
+
         Deposit storage deposit = deposits[tokenId];
 
         (uint96 endTime, uint256 stakedDuration) =
