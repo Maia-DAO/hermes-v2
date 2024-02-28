@@ -36,8 +36,8 @@ abstract contract ERC20Gauges is ERC20MultiVotes, ReentrancyGuard, IERC20Gauges 
                             GAUGE STATE
     ///////////////////////////////////////////////////////////////*/
 
-    /// @notice 12 hours period at the end of a cycle where votes cannot increment
-    uint256 private constant INCREMENT_FREEZE_WINDOW = 12 hours;
+    /// @notice 1 hours period at the end of a cycle where votes cannot increment
+    uint256 private constant INCREMENT_FREEZE_WINDOW = 1 hours;
 
     /// @inheritdoc IERC20Gauges
     IFlywheelBooster public override flywheelBooster;

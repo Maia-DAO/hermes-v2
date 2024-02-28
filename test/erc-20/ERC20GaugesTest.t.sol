@@ -279,7 +279,7 @@ contract ERC20GaugesTest is DSTestPlus {
         token.addGauge(gauge1);
 
         // any timestamp in freeze window is unable to increment
-        hevm.warp(token.getGaugeCycleEnd() - (cycleOffset % 12 hours) - 1);
+        hevm.warp(token.getGaugeCycleEnd() - (cycleOffset % 1 hours) - 1);
 
         hevm.expectRevert(abi.encodeWithSignature("IncrementFreezeError()"));
         token.incrementGauge(gauge1, amount);
