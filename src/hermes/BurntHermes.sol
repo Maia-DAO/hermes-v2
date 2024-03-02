@@ -58,7 +58,7 @@ contract BurntHermes is UtilityManager, ERC4626DepositOnly {
             address(DeployBurntHermesBoost.deploy(_owner)),
             address(new bHermesVotes(_owner))
         )
-        ERC4626DepositOnly(_hermes, "Burnt Hermes: Gov + Yield + Boost", "BurntHermes")
+        ERC4626DepositOnly(_hermes, "Burnt Hermes: Gov + Yield + Boost", "bHERMES")
     {}
 
     /*///////////////////////////////////////////////////////////////
