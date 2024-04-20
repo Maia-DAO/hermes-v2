@@ -21,10 +21,10 @@ contract BaseV2Minter is Ownable, IBaseV2Minter {
     ///////////////////////////////////////////////////////////////*/
 
     /// @dev 0.2% per week target emission
-    uint256 internal constant BASE = 1000;
+    uint256 internal constant BASE = 10000;
 
     uint256 internal constant MAX_TAIL_EMISSION = 100;
-    uint256 internal constant MAX_DAO_SHARE = 300;
+    uint256 internal constant MAX_DAO_SHARE = 3000;
 
     /// @inheritdoc IBaseV2Minter
     address public immutable override underlying;
@@ -37,7 +37,7 @@ contract BaseV2Minter is Ownable, IBaseV2Minter {
     address public override dao;
 
     /// @inheritdoc IBaseV2Minter
-    uint96 public override daoShare = 100;
+    uint96 public override daoShare = 1000;
 
     /// @inheritdoc IBaseV2Minter
     uint256 public override weekly;
