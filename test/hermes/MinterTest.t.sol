@@ -63,15 +63,15 @@ contract BaseV2MinterTest is DSTestPlus {
     }
 
     function testSetDaoShare(uint96 newDaoShare) public {
-        newDaoShare %= 301;
-        assertEq(baseV2Minter.daoShare(), 100);
+        newDaoShare %= 3001;
+        assertEq(baseV2Minter.daoShare(), 1000);
         baseV2Minter.setDaoShare(newDaoShare);
         assertEq(baseV2Minter.daoShare(), newDaoShare);
     }
 
     function testSetDaoShareFail(uint96 newDaoShare) public {
-        newDaoShare %= type(uint96).max - 301;
-        newDaoShare += 301;
+        newDaoShare %= type(uint96).max - 3001;
+        newDaoShare += 3001;
         hevm.expectRevert(IBaseV2Minter.DaoShareTooHigh.selector);
         baseV2Minter.setDaoShare(newDaoShare);
     }
@@ -95,12 +95,12 @@ contract BaseV2MinterTest is DSTestPlus {
         baseV2Minter.initialize(flywheelGaugeRewards);
         assertEq(baseV2Minter.circulatingSupply(), 0);
         hevm.prank(address(baseV2Minter));
-        rewardToken.mint(address(this), 1000);
-        assertEq(baseV2Minter.circulatingSupply(), 1000);
+        rewardToken.mint(address(this), 10000);
+        assertEq(baseV2Minter.circulatingSupply(), 10000);
 
-        rewardToken.approve(address(bHermesToken), 500);
-        bHermesToken.deposit(500, address(this));
-        assertEq(baseV2Minter.circulatingSupply(), 500);
+        rewardToken.approve(address(bHermesToken), 5000);
+        bHermesToken.deposit(5000, address(this));
+        assertEq(baseV2Minter.circulatingSupply(), 5000);
     }
 
     function testWeeklyEmission() public {
@@ -108,33 +108,33 @@ contract BaseV2MinterTest is DSTestPlus {
         baseV2Minter.initialize(flywheelGaugeRewards);
         assertEq(baseV2Minter.weeklyEmission(), 0);
         hevm.prank(address(baseV2Minter));
-        rewardToken.mint(address(this), 1000);
-        assertEq(baseV2Minter.weeklyEmission(), (1000 * 20) / 1000);
+        rewardToken.mint(address(this), 10000);
+        assertEq(baseV2Minter.weeklyEmission(), (10000 * 20) / 10000);
 
-        rewardToken.approve(address(bHermesToken), 500);
-        bHermesToken.deposit(500, address(this));
-        assertEq(baseV2Minter.weeklyEmission(), (500 * 20) / 1000);
+        rewardToken.approve(address(bHermesToken), 5000);
+        bHermesToken.deposit(5000, address(this));
+        assertEq(baseV2Minter.weeklyEmission(), (5000 * 20) / 10000);
     }
 
     function testCalculateGrowth() public {
         hevm.prank(address(baseV2Minter));
-        rewardToken.mint(address(this), 1000);
+        rewardToken.mint(address(this), 10000);
         assertEq(baseV2Minter.calculateGrowth(1 ether), 0);
 
-        rewardToken.approve(address(bHermesToken), 500);
-        bHermesToken.deposit(500, address(this));
+        rewardToken.approve(address(bHermesToken), 5000);
+        bHermesToken.deposit(5000, address(this));
         assertEq(baseV2Minter.calculateGrowth(1 ether), 1 ether / 2);
 
-        rewardToken.approve(address(bHermesToken), 500);
-        bHermesToken.deposit(500, address(this));
+        rewardToken.approve(address(bHermesToken), 5000);
+        bHermesToken.deposit(5000, address(this));
         assertEq(baseV2Minter.calculateGrowth(1 ether), 1 ether);
     }
 
     function testUpdatePeriod() public {
         hevm.prank(address(baseV2Minter));
-        rewardToken.mint(address(this), 1000);
-        rewardToken.approve(address(bHermesToken), 500);
-        bHermesToken.deposit(500, address(this));
+        rewardToken.mint(address(this), 10000);
+        rewardToken.approve(address(bHermesToken), 5000);
+        bHermesToken.deposit(5000, address(this));
 
         assertEq(baseV2Minter.activePeriod(), 0);
         baseV2Minter.initialize(flywheelGaugeRewards);
@@ -142,22 +142,22 @@ contract BaseV2MinterTest is DSTestPlus {
         hevm.warp(block.timestamp + 1 weeks);
 
         hevm.expectEmit(true, true, true, true);
-        emit Mint(10, 500, 5, 1);
+        emit Mint(10, 5000, 5, 1);
 
         baseV2Minter.updatePeriod();
         assertEq(baseV2Minter.activePeriod(), block.timestamp);
 
-        assertEq(rewardToken.balanceOf(address(bHermesToken)), 505);
-        assertEq(rewardToken.balanceOf(address(this)), 501);
+        assertEq(rewardToken.balanceOf(address(bHermesToken)), 5005);
+        assertEq(rewardToken.balanceOf(address(this)), 5001);
     }
 
     function testUpdatePeriodMinterHasBalance() public {
         hevm.prank(address(baseV2Minter));
-        rewardToken.mint(address(baseV2Minter), 500);
+        rewardToken.mint(address(baseV2Minter), 5000);
         hevm.prank(address(baseV2Minter));
-        rewardToken.mint(address(this), 500);
-        rewardToken.approve(address(bHermesToken), 500);
-        bHermesToken.deposit(500, address(this));
+        rewardToken.mint(address(this), 5000);
+        rewardToken.approve(address(bHermesToken), 5000);
+        bHermesToken.deposit(5000, address(this));
 
         assertEq(baseV2Minter.activePeriod(), 0);
         baseV2Minter.initialize(flywheelGaugeRewards);
@@ -165,20 +165,20 @@ contract BaseV2MinterTest is DSTestPlus {
         hevm.warp(block.timestamp + 1 weeks);
 
         hevm.expectEmit(true, true, true, true);
-        emit Mint(10, 500, 5, 1);
+        emit Mint(10, 5000, 5, 1);
 
         baseV2Minter.updatePeriod();
         assertEq(baseV2Minter.activePeriod(), block.timestamp);
 
-        assertEq(rewardToken.balanceOf(address(bHermesToken)), 505);
+        assertEq(rewardToken.balanceOf(address(bHermesToken)), 5005);
         assertEq(rewardToken.balanceOf(address(this)), 1);
     }
 
     function testUpdatePeriodFallback() public {
         hevm.prank(address(baseV2Minter));
-        rewardToken.mint(address(this), 1000);
-        rewardToken.approve(address(bHermesToken), 500);
-        bHermesToken.deposit(500, address(this));
+        rewardToken.mint(address(this), 10000);
+        rewardToken.approve(address(bHermesToken), 5000);
+        bHermesToken.deposit(5000, address(this));
 
         assertEq(baseV2Minter.activePeriod(), 0);
         baseV2Minter.initialize(flywheelGaugeRewards);
@@ -186,23 +186,23 @@ contract BaseV2MinterTest is DSTestPlus {
         hevm.warp(block.timestamp + 1 weeks);
 
         hevm.expectEmit(true, true, true, true);
-        emit Mint(10, 500, 5, 1);
+        emit Mint(10, 5000, 5, 1);
 
         (bool successful,) = address(baseV2Minter).call("");
         assertTrue(successful);
 
         assertEq(baseV2Minter.activePeriod(), block.timestamp);
-        assertEq(rewardToken.balanceOf(address(bHermesToken)), 505);
-        assertEq(rewardToken.balanceOf(address(this)), 501);
+        assertEq(rewardToken.balanceOf(address(bHermesToken)), 5005);
+        assertEq(rewardToken.balanceOf(address(this)), 5001);
     }
 
     function testUpdatePeriodNoDao() public {
         baseV2Minter.setDao(address(0));
 
         hevm.prank(address(baseV2Minter));
-        rewardToken.mint(address(this), 1000);
-        rewardToken.approve(address(bHermesToken), 500);
-        bHermesToken.deposit(500, address(this));
+        rewardToken.mint(address(this), 10000);
+        rewardToken.approve(address(bHermesToken), 5000);
+        bHermesToken.deposit(5000, address(this));
 
         assertEq(baseV2Minter.activePeriod(), 0);
         baseV2Minter.initialize(flywheelGaugeRewards);
@@ -210,13 +210,13 @@ contract BaseV2MinterTest is DSTestPlus {
         hevm.warp(block.timestamp + 1 weeks);
 
         hevm.expectEmit(true, true, true, true);
-        emit Mint(10, 500, 5, 0);
+        emit Mint(10, 5000, 5, 0);
 
         baseV2Minter.updatePeriod();
         assertEq(baseV2Minter.activePeriod(), block.timestamp);
 
-        assertEq(rewardToken.balanceOf(address(bHermesToken)), 505);
-        assertEq(rewardToken.balanceOf(address(this)), 500);
+        assertEq(rewardToken.balanceOf(address(bHermesToken)), 5005);
+        assertEq(rewardToken.balanceOf(address(this)), 5000);
     }
 
     function testGetRewards() public {
