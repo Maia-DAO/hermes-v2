@@ -201,7 +201,7 @@ contract UniswapV3GaugeFactoryTest is DSTestPlus {
         factory.removeGauge(gauge);
     }
 
-    function testGetGauges(address strategy) public {
+    function testGetGauges(uint96 strategy) public {
         address strategy1 = address(uint160(strategy));
         address strategy2 = address(uint160(strategy) + 1);
 
