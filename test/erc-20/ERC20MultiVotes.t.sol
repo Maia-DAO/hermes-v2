@@ -239,6 +239,85 @@ contract ERC20MultiVotesTest is Test {
         require(token.freeVotes(owner) == expectedFree);
     }
 
+    function testBackwardCompatibleDelegateAmountBySig(
+        uint128 delegatorPk,
+        address oldDelegatee,
+        uint112 beforeDelegateAmount,
+        address newDelegatee,
+        uint112 mintAmount,
+        uint112 delegateAmountToIncrease
+    ) public {
+        if (delegatorPk == 0) delegatorPk++;
+        address owner = vm.addr(delegatorPk);
+
+        mintAmount %= type(uint112).max;
+        mintAmount++;
+
+        beforeDelegateAmount %= mintAmount;
+        beforeDelegateAmount++;
+
+        token.mint(owner, mintAmount);
+        token.setMaxDelegates(2);
+
+        bool oldDelegateIsZeroAddress = oldDelegatee == address(0);
+        uint256 expectedBefore = beforeDelegateAmount;
+
+        if (oldDelegateIsZeroAddress) {
+            expectedBefore = 0;
+            vm.expectRevert(abi.encodeWithSignature("DelegationError()"));
+        }
+
+        vm.prank(owner);
+        token.incrementDelegation(oldDelegatee, beforeDelegateAmount);
+
+        if (mintAmount == beforeDelegateAmount) delegateAmountToIncrease = 0;
+        else delegateAmountToIncrease %= (mintAmount - beforeDelegateAmount);
+
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            delegatorPk,
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    token.DOMAIN_SEPARATOR(),
+                    keccak256(
+                        abi.encode(
+                            token.DELEGATION_AMOUNT_TYPEHASH(),
+                            newDelegatee,
+                            delegateAmountToIncrease,
+                            0,
+                            block.timestamp
+                        )
+                    )
+                )
+            )
+        );
+
+        bool newDelegateIsZeroAddress = newDelegatee == address(0);
+        bool amountToIncreaseIsZero = delegateAmountToIncrease == 0;
+
+        uint256 expected = delegateAmountToIncrease;
+
+        if (newDelegateIsZeroAddress || amountToIncreaseIsZero) {
+            expected = 0;
+            vm.expectRevert(abi.encodeWithSignature("DelegationError()"));
+        }
+
+        uint256 expectedUsed = expected + expectedBefore;
+        uint256 expectedFree = mintAmount - expectedUsed;
+
+        token.delegateAmountBySig(newDelegatee, delegateAmountToIncrease, 0, block.timestamp, v, r, s);
+        if (oldDelegatee == newDelegatee) {
+            assertEq(token.delegatesVotesCount(owner, newDelegatee), expectedUsed);
+            assertEq(token.getVotes(newDelegatee), expectedUsed);
+        } else {
+            assertEq(token.delegatesVotesCount(owner, oldDelegatee), expectedBefore);
+            assertEq(token.delegatesVotesCount(owner, newDelegatee), expected);
+            assertEq(token.getVotes(newDelegatee), expected);
+        }
+        assertEq(token.userDelegatedVotes(owner), expectedUsed);
+        assertEq(token.freeVotes(owner), expectedFree);
+    }
+
     /*///////////////////////////////////////////////////////////////
                             TEST PAST VOTES
     //////////////////////////////////////////////////////////////*/

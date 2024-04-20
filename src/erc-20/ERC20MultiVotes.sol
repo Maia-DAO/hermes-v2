@@ -384,4 +384,35 @@ abstract contract ERC20MultiVotes is ERC20, Ownable, IERC20MultiVotes {
         require(signer != address(0));
         _delegate(signer, delegatee);
     }
+
+    // keccak256("Delegation(address delegatee,uint256 amount,uint256 nonce,uint256 expiry)");
+    bytes32 public constant DELEGATION_AMOUNT_TYPEHASH =
+        0x4e5bad79d7a0440fb72ccd68e0066fd311c89b4798247673e10a7539f77a95d4;
+
+    function delegateAmountBySig(
+        address delegatee,
+        uint256 amount,
+        uint256 nonce,
+        uint256 expiry,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public {
+        require(block.timestamp <= expiry, "ERC20MultiVotes: signature expired");
+        address signer = ecrecover(
+            keccak256(
+                abi.encodePacked(
+                    "\x19\x01",
+                    DOMAIN_SEPARATOR(),
+                    keccak256(abi.encode(DELEGATION_AMOUNT_TYPEHASH, delegatee, amount, nonce, expiry))
+                )
+            ),
+            v,
+            r,
+            s
+        );
+        require(nonce == nonces[signer]++, "ERC20MultiVotes: invalid nonce");
+        require(signer != address(0));
+        _incrementDelegation(signer, delegatee, amount);
+    }
 }
