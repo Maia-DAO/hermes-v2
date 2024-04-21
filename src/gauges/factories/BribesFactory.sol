@@ -35,7 +35,7 @@ contract BribesFactory is Ownable, IBribesFactory {
 
     /**
      * @notice Creates a new bribes factory
-     * @param _owner Owner of this contract, transfer to bHermesGauges contract after deployment
+     * @param _owner Owner of this contract, transfer to bHermesGauges contract after deployment.
      */
     constructor(address _owner) {
         _initializeOwner(_owner);

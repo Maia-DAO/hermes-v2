@@ -55,13 +55,13 @@ contract FlywheelBoosterGaugeWeight is Ownable, IFlywheelBooster {
     }
 
     /// @inheritdoc IFlywheelBooster
-    /// @dev Total opt-in gauge weight allocated to the strategy
+    /// @dev Total opt-in gauge weight allocated to the strategy.
     function boostedTotalSupply(ERC20 strategy) external view override returns (uint256) {
         return flywheelStrategyGaugeWeight[strategy][FlywheelCore(msg.sender)];
     }
 
     /// @inheritdoc IFlywheelBooster
-    /// @dev User's opt-in gauge weight allocated to the strategy
+    /// @dev User's opt-in gauge weight allocated to the strategy.
     function boostedBalanceOf(ERC20 strategy, address user) external view override returns (uint256) {
         return userGaugeflywheelId[user][strategy][FlywheelCore(msg.sender)] == 0
             ? 0
@@ -131,7 +131,7 @@ contract FlywheelBoosterGaugeWeight is Ownable, IFlywheelBooster {
      *   @param user the user to accrue bribes for
      *   @param strategy the strategy to accrue bribes for
      *   @param delta the delta to accrue bribes for
-     *   @param op the operation to perform on the gauge weight
+     *   @param op the operation to perform on the gauge weight, either addition or subtraction
      */
     function _accrueBribes(
         address user,
