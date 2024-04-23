@@ -1122,6 +1122,23 @@ contract UniswapV3StakerTest is Test, IERC721Receiver {
 
         assertEq(rewardToken.balanceOf(address(uniswapV3Staker)), balanceStakerBefore - earnedRewards / 2);
         assertEq(rewardToken.balanceOf(address(this)), balanceThisBefore + earnedRewards / 2);
+        assertEq(uniswapV3Staker.rewards(address(this)), earnedRewards / 2);
+    }
+
+    // Test claim rewards with a specific amount
+    function testClaimRewardsWithAmountGreater() public {
+        testUnstakeTokenHalfIncentive();
+
+        uint256 balanceStakerBefore = rewardToken.balanceOf(address(uniswapV3Staker));
+        uint256 balanceThisBefore = rewardToken.balanceOf(address(this));
+
+        uint256 earnedRewards = uniswapV3Staker.rewards(address(this));
+
+        uniswapV3Staker.claimReward(address(this), earnedRewards * 2);
+
+        assertEq(rewardToken.balanceOf(address(uniswapV3Staker)), balanceStakerBefore - earnedRewards);
+        assertEq(rewardToken.balanceOf(address(this)), balanceThisBefore + earnedRewards);
+        assertEq(uniswapV3Staker.rewards(address(this)), 0);
     }
 
     // Test claim rewards twice
@@ -1135,6 +1152,23 @@ contract UniswapV3StakerTest is Test, IERC721Receiver {
 
         assertEq(rewardToken.balanceOf(address(uniswapV3Staker)), balanceStakerBefore);
         assertEq(rewardToken.balanceOf(address(this)), balanceThisBefore);
+        assertEq(uniswapV3Staker.rewards(address(this)), 0);
+    }
+
+    // Test claim rewards twice
+    function testClaimRewardsWithAmountGreaterTwice() public {
+        testClaimRewardsWithAmountGreater();
+
+        uint256 balanceStakerBefore = rewardToken.balanceOf(address(uniswapV3Staker));
+        uint256 balanceThisBefore = rewardToken.balanceOf(address(this));
+
+        uint256 earnedRewards = uniswapV3Staker.rewards(address(this));
+
+        uniswapV3Staker.claimReward(address(this), earnedRewards * 2);
+
+        assertEq(rewardToken.balanceOf(address(uniswapV3Staker)), balanceStakerBefore);
+        assertEq(rewardToken.balanceOf(address(this)), balanceThisBefore);
+        assertEq(uniswapV3Staker.rewards(address(this)), 0);
     }
 
     // Test remove gauge

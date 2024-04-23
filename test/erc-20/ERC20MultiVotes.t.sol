@@ -239,28 +239,30 @@ contract ERC20MultiVotesTest is Test {
         require(token.freeVotes(owner) == expectedFree);
     }
 
-    function testBackwardCompatibleDelegateAmountBySig(
-        uint128 delegatorPk,
-        address oldDelegatee,
-        uint112 beforeDelegateAmount,
-        address newDelegatee,
-        uint112 mintAmount,
-        uint112 delegateAmountToIncrease
-    ) public {
-        if (delegatorPk == 0) delegatorPk++;
-        address owner = vm.addr(delegatorPk);
+    struct DelegateAmountTestParams {
+        uint128 delegatorPk;
+        address oldDelegatee;
+        uint112 beforeDelegateAmount;
+        address newDelegatee;
+        uint112 mintAmount;
+        uint112 delegateAmountToIncrease;
+    }
 
-        mintAmount %= type(uint112).max;
-        mintAmount++;
+    function testBackwardCompatibleDelegateAmountBySig(DelegateAmountTestParams memory params) public {
+        if (params.delegatorPk == 0) params.delegatorPk++;
+        address owner = vm.addr(params.delegatorPk);
 
-        beforeDelegateAmount %= mintAmount;
-        beforeDelegateAmount++;
+        params.mintAmount %= type(uint112).max;
+        params.mintAmount++;
 
-        token.mint(owner, mintAmount);
+        params.beforeDelegateAmount %= params.mintAmount;
+        params.beforeDelegateAmount++;
+
+        token.mint(owner, params.mintAmount);
         token.setMaxDelegates(2);
 
-        bool oldDelegateIsZeroAddress = oldDelegatee == address(0);
-        uint256 expectedBefore = beforeDelegateAmount;
+        bool oldDelegateIsZeroAddress = params.oldDelegatee == address(0);
+        uint256 expectedBefore = params.beforeDelegateAmount;
 
         if (oldDelegateIsZeroAddress) {
             expectedBefore = 0;
@@ -268,13 +270,13 @@ contract ERC20MultiVotesTest is Test {
         }
 
         vm.prank(owner);
-        token.incrementDelegation(oldDelegatee, beforeDelegateAmount);
+        token.incrementDelegation(params.oldDelegatee, params.beforeDelegateAmount);
 
-        if (mintAmount == beforeDelegateAmount) delegateAmountToIncrease = 0;
-        else delegateAmountToIncrease %= (mintAmount - beforeDelegateAmount);
+        if (params.mintAmount == params.beforeDelegateAmount) params.delegateAmountToIncrease = 0;
+        else params.delegateAmountToIncrease %= (params.mintAmount - params.beforeDelegateAmount);
 
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-            delegatorPk,
+            params.delegatorPk,
             keccak256(
                 abi.encodePacked(
                     "\x19\x01",
@@ -282,8 +284,8 @@ contract ERC20MultiVotesTest is Test {
                     keccak256(
                         abi.encode(
                             token.DELEGATION_AMOUNT_TYPEHASH(),
-                            newDelegatee,
-                            delegateAmountToIncrease,
+                            params.newDelegatee,
+                            params.delegateAmountToIncrease,
                             0,
                             block.timestamp
                         )
@@ -292,10 +294,10 @@ contract ERC20MultiVotesTest is Test {
             )
         );
 
-        bool newDelegateIsZeroAddress = newDelegatee == address(0);
-        bool amountToIncreaseIsZero = delegateAmountToIncrease == 0;
+        bool newDelegateIsZeroAddress = params.newDelegatee == address(0);
+        bool amountToIncreaseIsZero = params.delegateAmountToIncrease == 0;
 
-        uint256 expected = delegateAmountToIncrease;
+        uint256 expected = params.delegateAmountToIncrease;
 
         if (newDelegateIsZeroAddress || amountToIncreaseIsZero) {
             expected = 0;
@@ -303,18 +305,19 @@ contract ERC20MultiVotesTest is Test {
         }
 
         uint256 expectedUsed = expected + expectedBefore;
-        uint256 expectedFree = mintAmount - expectedUsed;
+        uint256 expectedFree = params.mintAmount - expectedUsed;
 
-        token.delegateAmountBySig(newDelegatee, delegateAmountToIncrease, 0, block.timestamp, v, r, s);
-        if (oldDelegatee == newDelegatee) {
-            assertEq(token.delegatesVotesCount(owner, newDelegatee), expectedUsed);
-            assertEq(token.getVotes(newDelegatee), expectedUsed);
+        token.delegateAmountBySig(params.newDelegatee, params.delegateAmountToIncrease, 0, block.timestamp, v, r, s);
+        if (params.oldDelegatee == params.newDelegatee) {
+            assertEq(token.delegatesVotesCount(owner, params.newDelegatee), expectedUsed);
+            assertEq(token.getVotes(params.newDelegatee), expectedUsed);
         } else {
-            assertEq(token.delegatesVotesCount(owner, oldDelegatee), expectedBefore);
-            assertEq(token.delegatesVotesCount(owner, newDelegatee), expected);
-            assertEq(token.getVotes(newDelegatee), expected);
+            assertEq(token.delegatesVotesCount(owner, params.oldDelegatee), expectedBefore);
+            assertEq(token.delegatesVotesCount(owner, params.newDelegatee), expected);
+            assertEq(token.getVotes(params.newDelegatee), expected);
         }
         assertEq(token.userDelegatedVotes(owner), expectedUsed);
+
         assertEq(token.freeVotes(owner), expectedFree);
     }
 

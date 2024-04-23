@@ -270,11 +270,9 @@ contract UniswapV3Staker is IUniswapV3Staker, Multicallable {
     /// @inheritdoc IUniswapV3Staker
     function claimReward(address to, uint256 amountRequested) external override returns (uint256 reward) {
         reward = rewards[msg.sender];
-        if (amountRequested != 0) {
-            if (amountRequested < reward) {
-                rewards[msg.sender] = reward - amountRequested;
-                reward = amountRequested;
-            }
+        if (amountRequested != 0 && amountRequested < reward) {
+            rewards[msg.sender] = reward - amountRequested;
+            reward = amountRequested;
         } else {
             delete rewards[msg.sender];
         }
