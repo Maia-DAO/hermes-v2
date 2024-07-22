@@ -4,10 +4,11 @@ pragma solidity ^0.8.0;
 import {console2} from "forge-std/console2.sol";
 
 import {DSTestPlus} from "solmate/test/utils/DSTestPlus.sol";
+import {ERC20} from "solmate/tokens/ERC20.sol";
 
 import {FlywheelBoosterGaugeWeight} from "@rewards/booster/FlywheelBoosterGaugeWeight.sol";
 
-import {MockBaseV2Gauge, FlywheelGaugeRewards, ERC20} from "../gauges/mocks/MockBaseV2Gauge.sol";
+import {MockBaseV2Gauge, FlywheelGaugeRewards} from "../gauges/mocks/MockBaseV2Gauge.sol";
 
 import {MockERC20Gauges, ERC20Gauges, IERC20Gauges} from "./mocks/MockERC20Gauges.t.sol";
 

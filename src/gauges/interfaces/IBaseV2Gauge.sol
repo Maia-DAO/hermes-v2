@@ -78,7 +78,7 @@ interface IBaseV2Gauge {
     function detachUser(address user) external;
 
     /*///////////////////////////////////////////////////////////////
-                            EVENTS
+                                EVENTS
     ///////////////////////////////////////////////////////////////*/
 
     /**

@@ -3,9 +3,11 @@ pragma solidity ^0.8.0;
 
 import {DSTestPlus} from "solmate/test/utils/DSTestPlus.sol";
 import {MockERC20} from "solmate/test/utils/mocks/MockERC20.sol";
+import {ERC20} from "solmate/tokens/ERC20.sol";
+
 import {MockERC20Gauges} from "../../erc-20/mocks/MockERC20Gauges.t.sol";
 import {MockRewardsStream} from "../mocks/MockRewardsStream.sol";
-import {MockBaseV2Gauge, ERC20} from "../../gauges/mocks/MockBaseV2Gauge.sol";
+import {MockBaseV2Gauge} from "../../gauges/mocks/MockBaseV2Gauge.sol";
 
 import {FlywheelBoosterGaugeWeight} from "@rewards/booster/FlywheelBoosterGaugeWeight.sol";
 import "@rewards/rewards/FlywheelGaugeRewards.sol";

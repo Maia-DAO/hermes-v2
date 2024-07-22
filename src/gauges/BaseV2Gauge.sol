@@ -3,8 +3,6 @@ pragma solidity ^0.8.0;
 
 import {SafeTransferLib} from "solady/utils/SafeTransferLib.sol";
 
-import {ERC20} from "solmate/tokens/ERC20.sol";
-
 import {bHermesBoost} from "@hermes/tokens/bHermesBoost.sol";
 
 import {MultiRewardsDepot} from "@rewards/depots/MultiRewardsDepot.sol";

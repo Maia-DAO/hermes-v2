@@ -8,9 +8,9 @@ import {IUniswapV3Factory} from "@uniswap/v3-core/contracts/interfaces/IUniswapV
 import {IUniswapV3Pool} from "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import {INonfungiblePositionManager} from "@uniswap/v3-periphery/contracts/interfaces/INonfungiblePositionManager.sol";
 
-import {UniswapV3Gauge} from "@gauges/UniswapV3Gauge.sol";
-
 import {bHermesBoost} from "@hermes/tokens/bHermesBoost.sol";
+
+import {UniswapV3Gauge} from "@gauges/UniswapV3Gauge.sol";
 
 /**
  * @title Uniswap V3 Staker Interface with BurntHermes Boost.
