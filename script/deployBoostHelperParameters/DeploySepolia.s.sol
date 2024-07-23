@@ -5,6 +5,6 @@ import "../DeployBoostHelper.s.sol";
 
 contract DeploySepolia is DeployBoostHelper {
     function setUp() public override {
-        params = BoostHelperParameters({bHermesBoost: 0x8265Aa10EE11f57ed01Bf8ecE5BA57Ef75ED36dc});
+        params = BoostHelperParameters({bHermesBoost: 0xE2eaCd92208E81c88E629682aeab5646E4f8ed69});
     }
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {FlywheelCore} from "@rewards/FlywheelCoreStrategy.sol";
+import {FlywheelCore} from "@rewards/base/FlywheelCore.sol";
 
 import {BaseV2GaugeManager} from "../factories/BaseV2GaugeManager.sol";
 

@@ -16,8 +16,7 @@ script/deployParameters/Deploy<network>.s.sol:Deploy<network> \
 
 contract DeployRestakeHelper is Script {
     function run() external {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        vm.startBroadcast(deployerPrivateKey);
+        vm.startBroadcast();
 
         RestakeHelper restakeHelper = new RestakeHelper();
         console2.log("RestakeHelper Deployed:", address(restakeHelper));

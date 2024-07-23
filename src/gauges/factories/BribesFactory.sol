@@ -12,7 +12,8 @@ import {bHermesGauges} from "@hermes/tokens/bHermesGauges.sol";
 import {FlywheelBoosterGaugeWeight} from "@rewards/booster/FlywheelBoosterGaugeWeight.sol";
 import {MultiRewardsDepot} from "@rewards/depots/MultiRewardsDepot.sol";
 import {FlywheelBribeRewards} from "@rewards/rewards/FlywheelBribeRewards.sol";
-import {FlywheelCore} from "@rewards/FlywheelCoreStrategy.sol";
+import {FlywheelCore} from "@rewards/base/FlywheelCore.sol";
+import {FlywheelCore as FlywheelCoreStrategy} from "@rewards/FlywheelCoreStrategy.sol";
 
 import {IBribesFactory} from "../interfaces/IBribesFactory.sol";
 
@@ -78,7 +79,7 @@ contract BribesFactory is Ownable, IBribesFactory {
 
         bytes32 salt = bytes32(bytes20(bribeToken));
 
-        flywheel = new FlywheelCore{salt: salt}(
+        flywheel = new FlywheelCoreStrategy{salt: salt}(
             bribeToken, FlywheelBribeRewards(address(0)), flywheelGaugeWeightBooster, address(this)
         );
 

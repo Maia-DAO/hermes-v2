@@ -10,7 +10,7 @@ import {BribesFactory} from "@gauges/factories/BribesFactory.sol";
 
 import {bHermesGauges} from "@hermes/tokens/bHermesGauges.sol";
 
-import {FlywheelCore} from "@rewards/FlywheelCoreStrategy.sol";
+import {FlywheelCore} from "../base/FlywheelCore.sol";
 
 import {IFlywheelBooster} from "../interfaces/IFlywheelBooster.sol";
 

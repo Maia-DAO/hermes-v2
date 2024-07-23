@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 
 import {ERC20} from "solmate/tokens/ERC20.sol";
 
-import {FlywheelCore} from "@rewards/FlywheelCoreStrategy.sol";
+import {FlywheelCore} from "../base/FlywheelCore.sol";
 
 /**
  * @title Balance Booster Module for Flywheel

@@ -16,8 +16,7 @@ script/deployParameters/Deploy<network>.s.sol:Deploy<network> \
 
 contract DeployTransferAll is Script {
     function run() external {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        vm.startBroadcast(deployerPrivateKey);
+        vm.startBroadcast();
 
         TransferAll transferAll = new TransferAll();
         console2.log("TransferAll Deployed:", address(transferAll));
