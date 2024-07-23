@@ -13,7 +13,7 @@ contract RestakeHelper {
 
     /// @notice The Uniswap V3 Staker contract
     // NOTE: This is a constant for easier use in assembly
-    address private constant STAKER = 0x488ABc69528597bf86A7728aEf17EaaEb9d7E323;
+    address private constant STAKER = 0x2907fA8B81AD03F07A6545901957e7a9D1dD252B;
 
     /*///////////////////////////////////////////////////////////////
                                 FALLBACK
