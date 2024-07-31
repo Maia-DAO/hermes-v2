@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {ERC20} from "solmate/tokens/ERC20.sol";
-
 /// @title A helper contract to re-stake multiple NFTs on Hermes Uniswap V3 Staker
 /// @author Maia DAO
 /// @dev This contract is meant to be used in layer 2, optimizing for calldata size
