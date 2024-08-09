@@ -13,7 +13,7 @@ import {MockRewardsStream} from "../mocks/MockRewardsStream.sol";
 import {MockBaseV2Gauge, MultiRewardsDepot} from "./mocks/MockBaseV2Gauge.sol";
 
 import {FlywheelBoosterGaugeWeight, bHermesGauges} from "@rewards/booster/FlywheelBoosterGaugeWeight.sol";
-import {FlywheelCore, ERC20} from "@rewards/FlywheelCoreStrategy.sol";
+import {FlywheelCore, ERC20} from "@rewards/base/FlywheelCore.sol";
 import {FlywheelBribeRewards} from "@rewards/rewards/FlywheelBribeRewards.sol";
 import {FlywheelGaugeRewards, IBaseV2Minter} from "@rewards/rewards/FlywheelGaugeRewards.sol";
 

@@ -12,7 +12,7 @@ import {MockRewardsStream} from "../rewards/mocks/MockRewardsStream.sol";
 import {BurntHermes} from "@hermes/BurntHermes.sol";
 import {FlywheelBoosterGaugeWeight} from "@rewards/booster/FlywheelBoosterGaugeWeight.sol";
 import {MultiRewardsDepot} from "@rewards/depots/MultiRewardsDepot.sol";
-import {FlywheelCore, ERC20} from "@rewards/FlywheelCoreStrategy.sol";
+import {FlywheelCore, ERC20} from "@rewards/base/FlywheelCore.sol";
 import {FlywheelBribeRewards} from "@rewards/rewards/FlywheelBribeRewards.sol";
 import {FlywheelGaugeRewards} from "@rewards/rewards/FlywheelGaugeRewards.sol";
 

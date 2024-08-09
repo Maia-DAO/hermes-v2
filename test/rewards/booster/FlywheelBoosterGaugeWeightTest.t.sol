@@ -16,7 +16,7 @@ import {
     IFlywheelBooster
 } from "@rewards/booster/FlywheelBoosterGaugeWeight.sol";
 import {MultiRewardsDepot} from "@rewards/depots/MultiRewardsDepot.sol";
-import {FlywheelCore, ERC20} from "@rewards/FlywheelCoreStrategy.sol";
+import {FlywheelCore, ERC20} from "@rewards/base/FlywheelCore.sol";
 
 import {FlywheelBoosterGaugeWeightHandler} from "@test/utils/invariant/handlers/FlywheelBoosterGaugeWeightHandler.t.sol";
 
