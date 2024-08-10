@@ -55,7 +55,7 @@ contract BaseV2Minter is Ownable, IBaseV2Minter {
         address _owner
     ) {
         _initializeOwner(_owner);
-        initializer = msg.sender;
+        initializer = _owner;
         dao = _dao;
         underlying = address(ERC4626(_vault).asset());
         vault = ERC4626(_vault);
