@@ -105,7 +105,7 @@ contract UniswapV3StakerTest is Test, IERC721Receiver {
 
         bHermesToken = new BurntHermes(rewardToken, address(this), address(this));
 
-        flywheelGaugeWeightBooster = new FlywheelBoosterGaugeWeight();
+        flywheelGaugeWeightBooster = new FlywheelBoosterGaugeWeight(address(this));
 
         bribesFactory = flywheelGaugeWeightBooster.bribesFactory();
 

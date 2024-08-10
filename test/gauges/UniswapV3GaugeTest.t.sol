@@ -42,7 +42,7 @@ contract UniswapV3GaugeTest is DSTestPlus {
 
         rewardsStream = new MockRewardsStream(rewardToken, 100e18);
 
-        booster = new FlywheelBoosterGaugeWeight();
+        booster = new FlywheelBoosterGaugeWeight(address(this));
 
         bhermesToken = new BurntHermes(rewardToken, address(this), address(booster));
         bhermesToken.gaugeWeight().setMaxGauges(10);

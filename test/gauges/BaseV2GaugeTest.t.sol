@@ -42,7 +42,7 @@ contract BaseV2GaugeTest is DSTestPlus {
 
         rewardsStream = new MockRewardsStream(rewardToken, 100e18);
 
-        booster = new FlywheelBoosterGaugeWeight();
+        booster = new FlywheelBoosterGaugeWeight(address(this));
 
         gaugeToken = new MockERC20Gauges(address(this), address(booster));
         gaugeToken.setMaxGauges(10);

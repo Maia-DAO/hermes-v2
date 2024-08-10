@@ -44,7 +44,7 @@ contract InvariantFlywheelBoosterGaugeWeight is Test {
     function setUp() public {
         // Deploy the booster contract
         // 1 week Flywheel Bribe Rewards period
-        booster = new FlywheelBoosterGaugeWeight();
+        booster = new FlywheelBoosterGaugeWeight(address(this));
 
         // Deploy the bHermes Gauges contract
         // 1 week gauge weight voting period and 1 day grace period

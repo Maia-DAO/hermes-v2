@@ -20,7 +20,7 @@ contract ERC20GaugesTest is DSTestPlus {
     address gauge2;
 
     function setUp() public {
-        flywheelBooster = new FlywheelBoosterGaugeWeight();
+        flywheelBooster = new FlywheelBoosterGaugeWeight(address(this));
 
         token = new MockERC20Gauges(address(this), address(flywheelBooster));
         flywheelBooster.transferOwnership(address(token));
