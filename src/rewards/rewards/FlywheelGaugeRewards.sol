@@ -229,8 +229,7 @@ contract FlywheelGaugeRewards is IFlywheelGaugeRewards {
 
         if (incompleteCycle) {
             // If current cycle queue incomplete, do nothing to current cycle rewards or accrued
-        }
-        else {
+        } else {
             accruedRewards += cycleRewardsNext;
             cycleRewardsNext = 0;
         }
