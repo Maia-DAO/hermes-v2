@@ -47,13 +47,15 @@ contract RewardInfoHelper {
     function getRewardInfo(uint256 tokenId)
         external
         view
-        returns (uint256 reward, uint160 boostedInsideX128, uint160 secondsInsideX128)
+        returns (uint256 timestamp, uint256 reward, uint160 boostedInsideX128, uint160 secondsInsideX128)
     {
+        timestamp = block.timestamp;
+
         (IUniswapV3Pool pool,,,) = NFTPositionInfo.getPositionInfo(factory, nonfungiblePositionManager, tokenId);
 
         (address owner, int24 tickLower, int24 tickUpper, uint40 stakedTimestamp) = staker.deposits(tokenId);
 
-        if (stakedTimestamp == 0) return (0, 0, 0);
+        if (stakedTimestamp == 0) return (timestamp, 0, 0, 0);
 
         IUniswapV3Staker.IncentiveKey memory key =
             IUniswapV3Staker.IncentiveKey({pool: pool, startTime: IncentiveTime.computeStart(stakedTimestamp)});
